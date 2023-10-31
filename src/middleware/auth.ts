@@ -1,3 +1,4 @@
+import { User } from '@prisma/client';
 import EnvVars from '@src/constants/EnvVars';
 import { RequestHandler, Request } from 'express';
 import jwt from 'jsonwebtoken';
@@ -21,7 +22,29 @@ export const onlyAuth: RequestHandler = (req: Request, res, next) => {
 export const onlyGuest: RequestHandler = (req: Request, res, next) => {
   const token = req.headers.authorization?.split('Bearer ')[1];
   if (!token) return next();
-  const data = jwt.verify(token, EnvVars.Jwt.Secret);
-  if (!data) return next();
-  throw new Error('Tính năng này chỉ dành cho nguười chưa được xác thực!');
+  try {
+    const data = jwt.verify(token, EnvVars.Jwt.Secret);
+    if (!data) return next();
+  }
+  catch (e) {
+    throw new Error('Vui lòng đăng xuất và thử lại!');
+  }
+  throw new Error('Vui lòng đăng xuất và thử lại!');
+};
+
+
+export const setUserInfo: RequestHandler = (req: Request, res, next) => {
+  const token = req.headers.authorization?.split('Bearer ')[1];
+  if (!token) return next();
+  try {
+    const payload = jwt.verify(token, EnvVars.Jwt.Secret);
+    if (typeof payload !== 'string') {
+      req.userInfo = payload.data as User;
+      return next();
+    }
+  }
+  catch (e) {
+    return next();
+  }
+  next();
 };

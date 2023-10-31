@@ -1,6 +1,6 @@
 import { RequestHandler } from 'express';
 import BaseRequest from './requests/BaseRequest';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, User } from '@prisma/client';
 
 export { };
 
@@ -16,7 +16,8 @@ export declare type RouterOptions = {
 declare module 'express' {
   export interface Request {
     database?: PrismaClient;
-    fields?: Record<string, unknown>
+    fields?: Record<string, unknown>;
+    userInfo?: User
   }
 
 }

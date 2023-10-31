@@ -17,6 +17,7 @@ import HttpStatusCodes from '@src/constants/HttpStatusCodes';
 import { NodeEnvs } from '@src/constants/misc';
 import { RouteError } from '@src/other/classes';
 import { PrismaClient } from '@prisma/client';
+import cors from 'cors';
 
 
 // **** Variables **** //
@@ -33,6 +34,7 @@ app.use((req: Request, res, next) => {
   next();
 });
 app.use(express.json());
+app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 
 // Show routes called in console during development

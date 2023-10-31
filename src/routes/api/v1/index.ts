@@ -1,13 +1,13 @@
 import { registerController } from '@src/controllers/Guest/Auth/RegisterController';
 import { RouterOptions } from '@src/global';
-import { onlyGuest, onlyAuth } from '@src/middleware/auth';
+import { onlyGuest, setUserInfo } from '@src/middleware/auth';
 import RegisterRequest from '@src/requests/RegisterRequest';
 import LoginRequest from '@src/requests/LoginRequest';
 import { loginController } from '@src/controllers/Guest/Auth/LoginController';
+import { userInfoController } from '@src/controllers/BaseController';
 
 const registerRequest = new RegisterRequest();
 const loginRequest = new LoginRequest();
-
 
 export const router: RouterOptions = {
   'path': '/api/v1',
@@ -31,6 +31,20 @@ export const router: RouterOptions = {
           request: registerRequest.validation,
         },
       ],
+    },
+    {
+      'path': '',
+      middleware: [
+        setUserInfo,
+      ],
+      children: [
+        {
+          path: '/me',
+          method: 'get',
+          controller: userInfoController,
+        },
+      ],
+
     },
   ],
 };
