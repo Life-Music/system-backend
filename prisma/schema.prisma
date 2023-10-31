@@ -25,6 +25,8 @@ enum PaymentMethod {
 
 model User {
   id        Int       @id @default(autoincrement())
+  firstName String    @map("first_name")
+  lastName  String    @map("last_name")
   email     String    @unique
   username  String    @unique
   password  String
@@ -65,6 +67,8 @@ model Category {
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   CategoryOnMedia CategoryOnMedia[]
+
+  @@map("categories")
 }
 
 model CategoryOnMedia {
@@ -75,6 +79,7 @@ model CategoryOnMedia {
   media      Media    @relation(fields: [mediaId], references: [id])
 
   @@unique([categoryId, mediaId])
+  @@map("category_on_media")
 }
 
 model Media {
