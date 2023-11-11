@@ -3,6 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
+  output   = "./generated/mysql"
 }
 
 datasource db {
@@ -21,6 +22,11 @@ enum StatusResource {
 enum PaymentMethod {
   VISA
   BANKING
+}
+
+enum Status {
+  PUBLIC
+  PRIVATE
 }
 
 model User {
@@ -89,6 +95,7 @@ model Media {
   views     Int
   duration  Float
   status    StatusResource?
+  view_mode Status?
   createdAt DateTime        @default(now()) @map("created_at")
   updatedAt DateTime        @default(now()) @updatedAt @map("updated_at")
   lockedAt  DateTime?       @map("locked_at")
