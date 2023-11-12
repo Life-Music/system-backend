@@ -3,3 +3,7 @@ export enum NodeEnvs {
   Test = 'test',
   Production = 'production'
 }
+
+export const PerPages = {
+  LIST_MEDIA: 10,
+}

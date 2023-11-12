@@ -22,7 +22,13 @@ class BaseRequest {
     }));
   }
 
+  public prepareValidation(req: Request) {
+
+  }
+
   public validation = (req: Request) => {
+    this.prepareValidation(req)
+
     const validation = validate(...this.rules().map(rule => Object.entries(rule)).flat());
 
     this.bindToRequest(req);

@@ -23,7 +23,12 @@ const createNestedRouter = (
     );
   }
   router.children?.forEach((childRouter) => {
-    createNestedRouter(routerInstance, childRouter, path + router.path, router.middleware);
+    createNestedRouter(
+      routerInstance,
+      childRouter,
+      path + router.path,
+      [...(middleware ?? []), ...(router.middleware ?? [])]
+    );
   });
 };
 

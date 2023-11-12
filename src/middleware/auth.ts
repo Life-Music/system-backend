@@ -1,4 +1,4 @@
-import { User } from '@prisma/client';
+import { User } from '~/prisma/generated/mysql';
 import EnvVars from '@src/constants/EnvVars';
 import { RequestHandler, Request } from 'express';
 import jwt from 'jsonwebtoken';
@@ -39,6 +39,7 @@ export const setUserInfo: RequestHandler = (req: Request, res, next) => {
   try {
     const payload = jwt.verify(token, EnvVars.Jwt.Secret);
     if (typeof payload !== 'string') {
+
       req.userInfo = payload.data as User;
       return next();
     }

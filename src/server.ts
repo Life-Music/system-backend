@@ -16,7 +16,7 @@ import HttpStatusCodes from '@src/constants/HttpStatusCodes';
 
 import { NodeEnvs } from '@src/constants/misc';
 import { RouteError } from '@src/other/classes';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from '../prisma/generated/mysql';
 import cors from 'cors';
 
 

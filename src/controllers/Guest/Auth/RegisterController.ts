@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '~/prisma/generated/mysql';
 import BaseController from '@src/controllers/BaseController';
 import { Request, Response } from 'express';
 import md5 from 'md5';
