@@ -42,6 +42,10 @@ app.use((req: Request, res, next) => {
 });
 app.use(express.json());
 app.use(cors());
+app.use((req, res, next) => {
+  res.header('cross-origin-resource-policy', 'cross-origin');
+  next();
+});
 app.use(express.urlencoded({ extended: true }));
 
 // Show routes called in console during development
