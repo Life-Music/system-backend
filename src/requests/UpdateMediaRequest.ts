@@ -1,20 +1,17 @@
-import BaseRequest from "./BaseRequest";
+import BaseRequest from './BaseRequest';
 
 export default class UpdateMediaRequest extends BaseRequest {
   public rules(): Record<string, string>[] {
     return [
       {
-        title: 'string'
+        title: 'string',
       },
       {
-        description: 'string'
+        description: 'string',
       },
       {
-        view_mode: 'string'
+        viewMode: 'string',
       },
-      {
-        thumbnailId: 'string'
-      }
-    ]
+    ];
   }
 }

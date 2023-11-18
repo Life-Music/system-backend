@@ -9,6 +9,7 @@ class BaseRequest {
   }
 
   public bindToRequest(req: Request) {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const params: Record<string, unknown> = {
       ...req.params,
       ...req.body,
@@ -22,12 +23,13 @@ class BaseRequest {
     }));
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   public prepareValidation(req: Request) {
 
   }
 
   public validation = (req: Request) => {
-    this.prepareValidation(req)
+    this.prepareValidation(req);
 
     const validation = validate(...this.rules().map(rule => Object.entries(rule)).flat());
 

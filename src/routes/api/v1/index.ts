@@ -7,17 +7,27 @@ import { loginController } from '@src/controllers/Guest/Auth/LoginController';
 import { userInfoController } from '@src/controllers/BaseController';
 import { createResumableUploadController } from '@src/controllers/User/Media/ResumableUploadController';
 import { CreateResumableUploadRequest } from '@src/requests/CreateResumableUploadRequest';
-import { createMedia, deleteMedia, getMedia, listMedia, updateMedia } from '@src/controllers/User/Media/MediaController';
+import {
+  createMedia,
+  deleteMedia,
+  getMedia,
+  listMedia,
+  updateMedia,
+  uploadMediaDone,
+} from '@src/controllers/User/Media/MediaController';
 import CreateMediaRequest from '@src/requests/CreateMediaRequest';
 import ListMediaRequest from '@src/requests/ListMediaRequest';
 import UpdateMediaRequest from '@src/requests/UpdateMediaRequest';
+import MediaUploadDoneRequest from '@src/requests/MediaUploadDoneRequest';
+import { getLinkStream } from '@src/controllers/Guest/Audio/AudioController';
 
 const registerRequest = new RegisterRequest();
 const loginRequest = new LoginRequest();
-const createResumableUploadRequest = new CreateResumableUploadRequest()
-const createMediaRequest = new CreateMediaRequest()
-const listMediaRequest = new ListMediaRequest()
-const updateMediaRequest = new UpdateMediaRequest()
+const createResumableUploadRequest = new CreateResumableUploadRequest();
+const createMediaRequest = new CreateMediaRequest();
+const listMediaRequest = new ListMediaRequest();
+const updateMediaRequest = new UpdateMediaRequest();
+const mediaUploadDoneRequest = new MediaUploadDoneRequest();
 
 export const router: RouterOptions = {
   'path': '/api/v1',
@@ -69,18 +79,18 @@ export const router: RouterOptions = {
             {
               path: '/create-resumable-upload',
               controller: createResumableUploadController,
-              method: "post",
-              request: createResumableUploadRequest.validation
+              method: 'post',
+              request: createResumableUploadRequest.validation,
             },
             {
               path: '',
-              method: "post",
+              method: 'post',
               controller: createMedia,
               request: createMediaRequest.validation,
             },
             {
               path: '',
-              method: "get",
+              method: 'get',
               controller: listMedia,
               request: listMediaRequest.validation,
             },
@@ -99,10 +109,31 @@ export const router: RouterOptions = {
               method: 'patch',
               request: updateMediaRequest.validation,
               controller: updateMedia,
-            }
-          ]
-        }
-      ]
-    }
+            },
+            {
+              path: '/:mediaId/upload-done',
+              method: 'post',
+              request: mediaUploadDoneRequest.validation,
+              controller: uploadMediaDone,
+            },
+          ],
+        },
+      ],
+    },
+    {
+      path: '',
+      children: [
+        {
+          path: '/audio',
+          children: [
+            {
+              path: '/:resourceId/stream',
+              method: 'get',
+              controller: getLinkStream,
+            },
+          ],
+        },
+      ],
+    },
   ],
 };

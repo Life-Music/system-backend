@@ -1,16 +1,17 @@
-import BaseController from "@src/controllers/BaseController";
-import DataBaseNotReadyException from "@src/exception/DataBaseNotReadyException";
-import NoFieldsInitException from "@src/exception/NoFieldsInitException";
-import ResourceNotFound from "@src/exception/ResourceNotFound";
-import { Request, Response } from "express";
-import { Media, Status } from "prisma/generated/mysql";
+import BaseController from '@src/controllers/BaseController';
+import DataBaseNotReadyException from '@src/exception/DataBaseNotReadyException';
+import NoFieldsInitException from '@src/exception/NoFieldsInitException';
+import ResourceNotFound from '@src/exception/ResourceNotFound';
+import Jenkins from '@src/util/jenkins';
+import { Request, Response } from 'express';
+import { Media, Status, Prisma } from 'prisma/generated/mysql';
 
 class MediaController extends BaseController {
-  createMedia = async (req: Request, res: Response) => {
-    if (!req.database) throw new DataBaseNotReadyException()
-    if (!req.fields) throw new NoFieldsInitException()
-    const fields = req.fields as Media
-    const userId = req.userInfo?.id as number
+  public createMedia = async (req: Request, res: Response) => {
+    if (!req.database) throw new DataBaseNotReadyException();
+    if (!req.fields) throw new NoFieldsInitException();
+    const fields = req.fields as Media;
+    const userId = req.userInfo?.id as number;
 
     const media = await req.database.media.create({
       data: {
@@ -18,31 +19,37 @@ class MediaController extends BaseController {
         userId: userId,
         detail: {
           create: {
-            description: ""
-          }
-        }
-      }
-    })
+            description: '',
+          },
+        },
+      },
+      include: {
+        detail: true,
+        thumbnails: true,
+        audioResources: true,
+        videoResources: true,
+      },
+    });
 
     return res.json(
       this.success(
-        media
-      )
-    )
-  }
+        media,
+      ),
+    );
+  };
 
   public listMedia = async (req: Request, res: Response) => {
-    if (!req.database) throw new DataBaseNotReadyException()
-    if (!req.fields) throw new NoFieldsInitException()
-    const userId = req.userInfo?.id as number
+    if (!req.database) throw new DataBaseNotReadyException();
+    if (!req.fields) throw new NoFieldsInitException();
+    const userId = req.userInfo?.id as number;
     const fields = req.fields as {
       take: number,
       page: number
-    }
+    };
 
     const where = {
       userId,
-    }
+    };
 
     const media = await req.database.media.findMany({
       take: fields.take,
@@ -58,83 +65,124 @@ class MediaController extends BaseController {
             Comment: true,
             MediaReaction: {
               where: {
-                isLike: true
+                isLike: true,
               },
-            }
-          }
-        }
+            },
+          },
+        },
       },
       orderBy: [
         {
-          createdAt: "desc"
-        }
+          createdAt: 'desc',
+        },
       ],
-    })
+    });
 
     const totalObject = await req.database.media.count({
       where,
-    })
+    });
 
     return res.json(
       this.successWithMeta(
         media,
-        this.buildMetaPagination(totalObject, fields.page, fields.take, Math.ceil(totalObject / fields.take))
-      )
-    )
-  }
+        this.buildMetaPagination(totalObject, fields.page, fields.take, Math.ceil(totalObject / fields.take)),
+      ),
+    );
+  };
 
-  deleteMedia = async (req: Request, res: Response) => {
-    if (!req.database) throw new DataBaseNotReadyException()
-    const userId = req.userInfo?.id as number
-    const mediaId = req.params.mediaId
+  public deleteMedia = async (req: Request, res: Response) => {
+    if (!req.database) throw new DataBaseNotReadyException();
+    const userId = req.userInfo?.id as number;
+    const mediaId = req.params.mediaId;
 
     try {
-      const media = await req.database.media.delete({
-        where: {
-          userId,
-          id: mediaId,
-        }
-      })
+      const media = await req.database.$transaction(async (ctx) => {
+        const media = await ctx.media.delete({
+          where: {
+            userId,
+            id: mediaId,
+          },
+        });
+        // try {
+        //   await oneDrive.deleteItem(mediaId);
+        // }
+        // catch (error) {
+        //   console.error(error);
+        //   throw new UnexpectedException();
+        // }
+        return media;
+
+      });
+
 
       return res.json(
-        this.success(media)
-      )
+        this.success(media),
+      );
     }
     catch (e) {
-      throw new ResourceNotFound()
+      throw new ResourceNotFound();
     }
-  }
+  };
 
-  getMedia = async (req: Request, res: Response) => {
-    if (!req.database) throw new DataBaseNotReadyException()
-    const mediaId = req.params.mediaId
+  public getMedia = async (req: Request, res: Response) => {
+    if (!req.database) throw new DataBaseNotReadyException();
+    const mediaId = req.params.mediaId;
 
     try {
       const media = await req.database.media.findUniqueOrThrow({
         where: {
           id: mediaId,
-        }
-      })
+        },
+      });
 
       return res.json(
-        this.success(media)
-      )
+        this.success(media),
+      );
     }
     catch (e) {
-      throw new ResourceNotFound()
+      throw new ResourceNotFound();
     }
-  }
+  };
 
-  updateMedia = async (req: Request, res: Response) => {
-    if (!req.database) throw new DataBaseNotReadyException()
-    if (!req.fields) throw new NoFieldsInitException()
-    const userId = req.userInfo?.id as number
-    const mediaId = req.params.mediaId
+  public updateMedia = async (req: Request, res: Response) => {
+    if (!req.database) throw new DataBaseNotReadyException();
+    if (!req.fields) throw new NoFieldsInitException();
+    const userId = req.userInfo?.id as number;
+    const mediaId = req.params.mediaId;
     const fields = req.fields as {
       title?: string
       description?: string
-      view_mode: Status,
-      thumbnailId: string
+      viewMode: Status,
+      thumbnailId?: string
+    };
+
+    const data: Prisma.MediaUpdateInput = {
+      title: fields.title,
+      viewMode: fields.viewMode,
+      detail: {
+        update: {
+          description: fields.description,
+        },
+      },
+    };
+
+    if (fields.thumbnailId) {
+      data.thumbnails = {
+        updateMany: {
+          where: {},
+          data: {
+            isPrimary: false,
+          },
+        },
+        update: {
+          where: {
+            id: fields.thumbnailId,
+          },
+          data: {
+            isPrimary: true,
+          },
+        },
+      };
     }
 
     try {
@@ -143,50 +191,70 @@ class MediaController extends BaseController {
           userId,
           id: mediaId,
         },
-        data: {
-          title: fields.title,
-          viewMode: fields.view_mode,
-          detail: {
-            update: {
-              description: fields.description
-            }
-          },
-          thumbnails: {
-            updateMany: {
-              where: {},
-              data: {
-                isPrimary: false
-              }
-            },
-            update: {
-              where: {
-                id: fields.thumbnailId
-              },
-              data: {
-                isPrimary: true
-              }
-            }
-          }
-        }
-      })
+        data,
+      });
 
       return res.json(
-        this.success(media)
-      )
+        this.success(media),
+      );
     }
     catch (e) {
-      throw new ResourceNotFound()
+      throw new ResourceNotFound();
     }
-  }
+  };
+
+  public uploadDone = async (req: Request, res: Response) => {
+    if (!req.database) throw new DataBaseNotReadyException();
+    if (!req.fields) throw new NoFieldsInitException();
+    const userId = req.userInfo?.id as number;
+    const mediaId = req.params.mediaId;
+    const fields = req.fields as {
+      fileId: string
+    };
+
+    const media = await req.database.media.update({
+      where: {
+        id: mediaId,
+        userId,
+      },
+      data: {
+        status: 'PROCESSING',
+      },
+    });
+
+    if (!media) throw new ResourceNotFound();
+
+    await req.database.sessionUpload.deleteMany({
+      where: {
+        mediaId: media.id,
+      },
+    });
+
+    const audioResource = await req.database.audioResource.create({
+      data: {
+        mediaId: media.id,
+        label: 'LOSSLESS',
+        fileId: fields.fileId,
+      },
+    });
+
+    const jenkins = new Jenkins();
+    await jenkins.processAudio(audioResource.id);
+
+    return res.json(
+      this.success(audioResource),
+    );
+  };
 
 }
 
-const controller = new MediaController()
-const createMedia = controller.createMedia
-const listMedia = controller.listMedia
-const deleteMedia = controller.deleteMedia
-const getMedia = controller.getMedia
-const updateMedia = controller.updateMedia
+const controller = new MediaController();
+const createMedia = controller.createMedia;
+const listMedia = controller.listMedia;
+const deleteMedia = controller.deleteMedia;
+const getMedia = controller.getMedia;
+const updateMedia = controller.updateMedia;
+const uploadMediaDone = controller.uploadDone;
 
 export {
   createMedia,
@@ -194,4 +262,5 @@ export {
   deleteMedia,
   getMedia,
   updateMedia,
-}
+  uploadMediaDone,
+};

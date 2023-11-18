@@ -18,7 +18,13 @@ import { NodeEnvs } from '@src/constants/misc';
 import { RouteError } from '@src/other/classes';
 import { PrismaClient } from '../prisma/generated/mysql';
 import cors from 'cors';
+import { RedisClientType, createClient } from 'redis';
+const redisClient: RedisClientType = createClient({
+  url: EnvVars.Redis.Uri,
+});
 
+redisClient.on('error', err => console.log('Redis Client Error', err))
+  .connect();
 
 // **** Variables **** //
 
@@ -31,6 +37,7 @@ const app = express();
 app.use((req: Request, res, next) => {
   const prisma = new PrismaClient();
   req.database = prisma;
+  req.redis = redisClient;
   next();
 });
 app.use(express.json());

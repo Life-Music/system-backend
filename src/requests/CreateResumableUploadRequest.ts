@@ -1,14 +1,14 @@
-import BaseRequest from "./BaseRequest";
+import BaseRequest from './BaseRequest';
 
 export class CreateResumableUploadRequest extends BaseRequest {
   public rules(): Record<string, string>[] {
     return [
       {
-        mediaId: "string",
+        mediaId: 'string',
       },
       {
-        id: "string",
-      }
-    ]
+        id: 'string',
+      },
+    ];
   }
 }

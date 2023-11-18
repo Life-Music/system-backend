@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { RequestHandler } from 'express';
 import BaseRequest from './requests/BaseRequest';
 import { PrismaClient, User } from '../prisma/generated/mysql';
+import { RedisClientType } from 'redis';
 
 export { };
 
@@ -18,6 +20,7 @@ declare module 'express' {
     database?: PrismaClient;
     fields?: Record<string, any>;
     userInfo?: User
+    redis?: RedisClientType;
   }
 
 }
