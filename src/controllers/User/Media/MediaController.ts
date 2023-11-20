@@ -5,6 +5,7 @@ import ResourceNotFound from '@src/exception/ResourceNotFound';
 import Jenkins from '@src/util/jenkins';
 import { Request, Response } from 'express';
 import { Media, Status, Prisma } from 'prisma/generated/mysql';
+import elasticSearch from '@src/services/ElasticSearch';
 
 class MediaController extends BaseController {
   public createMedia = async (req: Request, res: Response) => {
@@ -13,23 +14,40 @@ class MediaController extends BaseController {
     const fields = req.fields as Media;
     const userId = req.userInfo?.id as number;
 
-    const media = await req.database.media.create({
-      data: {
-        ...fields,
-        userId: userId,
-        detail: {
-          create: {
-            description: '',
+    const media = await req.database.$transaction(async (ctx) => {
+      const media = await ctx.media.create({
+        data: {
+          ...fields,
+          userId: userId,
+          detail: {
+            create: {
+              description: '',
+            },
           },
         },
-      },
-      include: {
-        detail: true,
-        thumbnails: true,
-        audioResources: true,
-        videoResources: true,
-      },
+        include: {
+          detail: true,
+          thumbnails: true,
+          audioResources: true,
+          videoResources: true,
+        },
+      });
+      await elasticSearch.index({
+        index: 'media',
+        id: media.id.toString(),
+        document: {
+          id: media.id.toString(),
+          thumbnail_url: media.thumbnails[0].url,
+          name: media.title,
+          status: media.status,
+          published_at: media.publishedAt,
+          locked_at: media.lockedAt,
+          view_mode: media.viewMode,
+        },
+      });
+      return media;
     });
+
 
     return res.json(
       this.success(
@@ -102,6 +120,11 @@ class MediaController extends BaseController {
             userId,
             id: mediaId,
           },
+        });
+
+        await elasticSearch.delete({
+          index: 'media',
+          id: media.id,
         });
         // try {
         //   await oneDrive.deleteItem(mediaId);
@@ -186,12 +209,32 @@ class MediaController extends BaseController {
     }
 
     try {
-      const media = await req.database.media.update({
-        where: {
-          userId,
-          id: mediaId,
-        },
-        data,
+      const media = await req.database.$transaction(async (ctx) => {
+        const media = await ctx.media.update({
+          where: {
+            userId,
+            id: mediaId,
+          },
+          include: {
+            thumbnails: true,
+          },
+          data,
+        });
+
+        await elasticSearch.update({
+          index: 'media',
+          id: media.id.toString(),
+          doc: {
+            id: media.id.toString(),
+            thumbnail_url: media.thumbnails[0].url,
+            name: media.title,
+            status: media.status,
+            published_at: media.publishedAt,
+            locked_at: media.lockedAt,
+            view_mode: media.viewMode,
+          },
+        });
+        return media;
       });
 
       return res.json(

@@ -27,6 +27,7 @@
     "node": ">=16.10.0"
   },
   "dependencies": {
+    "@elastic/elasticsearch": "^8.10.0",
     "@prisma/client": "^5.4.2",
     "axios": "^1.6.1",
     "axios-retry": "^3.8.1",

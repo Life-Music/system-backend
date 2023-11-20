@@ -26,4 +26,9 @@ export default {
   Redis: {
     Uri: (process.env.REDIS_URI ?? ''),
   },
+  ElasticSearch: {
+    Endpoint: (process.env.ELASTIC_SEARCH_ENDPOINT ?? ''),
+    Username: (process.env.ELASTIC_SEARCH_USERNAME ?? ''),
+    Password: (process.env.ELASTIC_SEARCH_PASSWORD ?? ''),
+  },
 } as const;
