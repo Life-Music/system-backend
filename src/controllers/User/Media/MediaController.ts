@@ -37,7 +37,6 @@ class MediaController extends BaseController {
         id: media.id.toString(),
         document: {
           id: media.id.toString(),
-          thumbnail_url: media.thumbnails[0].url,
           name: media.title,
           status: media.status,
           published_at: media.publishedAt,
@@ -226,7 +225,6 @@ class MediaController extends BaseController {
           id: media.id.toString(),
           doc: {
             id: media.id.toString(),
-            thumbnail_url: media.thumbnails[0].url,
             name: media.title,
             status: media.status,
             published_at: media.publishedAt,
