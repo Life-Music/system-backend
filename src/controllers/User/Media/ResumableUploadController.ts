@@ -1,20 +1,18 @@
 import { Request, Response } from 'express';
 import BaseController from '../../BaseController';
 import OneDrive from '@src/services/OneDrive';
-import DataBaseNotReadyException from '@src/exception/DataBaseNotReadyException';
 import NoFieldsInitException from '@src/exception/NoFieldsInitException';
 const oneDrive = new OneDrive();
 
 class ResumableUploadController extends BaseController {
   public createLink = async (req: Request, res: Response) => {
-    if (!req.database) throw new DataBaseNotReadyException();
     if (!req.fields) throw new NoFieldsInitException();
     const fields = req.fields as {
       id: string,
       mediaId: string
     };
 
-    let sessionUpload = await req.database.sessionUpload.findUnique({
+    let sessionUpload = await globalThis.prisma.sessionUpload.findUnique({
       where: {
         id: fields.id,
         expired_at: {
@@ -27,7 +25,7 @@ class ResumableUploadController extends BaseController {
       const folderMediaId = await oneDrive.createFolder(fields.mediaId);
       const folderRawId = await oneDrive.createFolder('RAW', folderMediaId);
       const oneDriveUploadSession = await oneDrive.createUploadSession(folderRawId, fields.id);
-      sessionUpload = await req.database.sessionUpload.upsert({
+      sessionUpload = await globalThis.prisma.sessionUpload.upsert({
         where: {
           id: fields.id,
         },

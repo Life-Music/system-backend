@@ -1,5 +1,4 @@
 import BaseController from '@src/controllers/BaseController';
-import DataBaseNotReadyException from '@src/exception/DataBaseNotReadyException';
 import NoFieldsInitException from '@src/exception/NoFieldsInitException';
 import ResourceNotFound from '@src/exception/ResourceNotFound';
 import Jenkins from '@src/util/jenkins';
@@ -9,12 +8,11 @@ import elasticSearch from '@src/services/ElasticSearch';
 
 class MediaController extends BaseController {
   public createMedia = async (req: Request, res: Response) => {
-    if (!req.database) throw new DataBaseNotReadyException();
     if (!req.fields) throw new NoFieldsInitException();
     const fields = req.fields as Media;
     const userId = req.userInfo?.id as number;
 
-    const media = await req.database.$transaction(async (ctx) => {
+    const media = await globalThis.prisma.$transaction(async (ctx) => {
       const media = await ctx.media.create({
         data: {
           ...fields,
@@ -56,7 +54,6 @@ class MediaController extends BaseController {
   };
 
   public listMedia = async (req: Request, res: Response) => {
-    if (!req.database) throw new DataBaseNotReadyException();
     if (!req.fields) throw new NoFieldsInitException();
     const userId = req.userInfo?.id as number;
     const fields = req.fields as {
@@ -68,7 +65,7 @@ class MediaController extends BaseController {
       userId,
     };
 
-    const media = await req.database.media.findMany({
+    const media = await globalThis.prisma.media.findMany({
       take: fields.take,
       skip: fields.take * fields.page - fields.take,
       where,
@@ -79,8 +76,8 @@ class MediaController extends BaseController {
         videoResources: true,
         _count: {
           select: {
-            Comment: true,
-            MediaReaction: {
+            comment: true,
+            mediaReaction: {
               where: {
                 isLike: true,
               },
@@ -95,7 +92,7 @@ class MediaController extends BaseController {
       ],
     });
 
-    const totalObject = await req.database.media.count({
+    const totalObject = await globalThis.prisma.media.count({
       where,
     });
 
@@ -108,12 +105,11 @@ class MediaController extends BaseController {
   };
 
   public deleteMedia = async (req: Request, res: Response) => {
-    if (!req.database) throw new DataBaseNotReadyException();
     const userId = req.userInfo?.id as number;
     const mediaId = req.params.mediaId;
 
     try {
-      const media = await req.database.$transaction(async (ctx) => {
+      const media = await globalThis.prisma.$transaction(async (ctx) => {
         const media = await ctx.media.delete({
           where: {
             userId,
@@ -147,11 +143,10 @@ class MediaController extends BaseController {
   };
 
   public getMedia = async (req: Request, res: Response) => {
-    if (!req.database) throw new DataBaseNotReadyException();
     const mediaId = req.params.mediaId;
 
     try {
-      const media = await req.database.media.findUniqueOrThrow({
+      const media = await globalThis.prisma.media.findUniqueOrThrow({
         where: {
           id: mediaId,
         },
@@ -167,7 +162,6 @@ class MediaController extends BaseController {
   };
 
   public updateMedia = async (req: Request, res: Response) => {
-    if (!req.database) throw new DataBaseNotReadyException();
     if (!req.fields) throw new NoFieldsInitException();
     const userId = req.userInfo?.id as number;
     const mediaId = req.params.mediaId;
@@ -208,7 +202,7 @@ class MediaController extends BaseController {
     }
 
     try {
-      const media = await req.database.$transaction(async (ctx) => {
+      const media = await globalThis.prisma.$transaction(async (ctx) => {
         const media = await ctx.media.update({
           where: {
             userId,
@@ -245,7 +239,6 @@ class MediaController extends BaseController {
   };
 
   public uploadDone = async (req: Request, res: Response) => {
-    if (!req.database) throw new DataBaseNotReadyException();
     if (!req.fields) throw new NoFieldsInitException();
     const userId = req.userInfo?.id as number;
     const mediaId = req.params.mediaId;
@@ -253,7 +246,7 @@ class MediaController extends BaseController {
       fileId: string
     };
 
-    const media = await req.database.media.update({
+    const media = await globalThis.prisma.media.update({
       where: {
         id: mediaId,
         userId,
@@ -265,13 +258,13 @@ class MediaController extends BaseController {
 
     if (!media) throw new ResourceNotFound();
 
-    await req.database.sessionUpload.deleteMany({
+    await globalThis.prisma.sessionUpload.deleteMany({
       where: {
         mediaId: media.id,
       },
     });
 
-    const audioResource = await req.database.audioResource.create({
+    const audioResource = await globalThis.prisma.audioResource.create({
       data: {
         mediaId: media.id,
         label: 'LOSSLESS',

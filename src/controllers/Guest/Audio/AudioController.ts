@@ -1,5 +1,4 @@
 import BaseController from '@src/controllers/BaseController';
-import DataBaseNotReadyException from '@src/exception/DataBaseNotReadyException';
 import ResourceNotFound from '@src/exception/ResourceNotFound';
 import OneDrive from '@src/services/OneDrive';
 import { Request, RequestHandler } from 'express';
@@ -8,9 +7,8 @@ const oneDrive = new OneDrive();
 class AudioController extends BaseController {
 
   public getLinkStream: RequestHandler = async (req: Request, res) => {
-    if (!req.database || !req.redis) throw new DataBaseNotReadyException();
     const resourceId = req.params.resourceId;
-    const dataCached = await req.redis.get(resourceId);
+    const dataCached = await globalThis.redis.get(resourceId);
     if (dataCached) {
 
       const [timeExpired, link] = dataCached.split('|');
@@ -18,7 +16,7 @@ class AudioController extends BaseController {
         return res.redirect(link);
       }
     }
-    const audioResource = await req.database.audioResource.findUnique({
+    const audioResource = await globalThis.prisma.audioResource.findUnique({
       where: {
         id: resourceId,
       },
@@ -26,7 +24,7 @@ class AudioController extends BaseController {
     if (!audioResource) throw new ResourceNotFound();
     const itemInfo = await oneDrive.getFileInfo(audioResource.fileId);
 
-    await req.redis.set(resourceId, `${new Date().getTime()}|${itemInfo['@microsoft.graph.downloadUrl']}`);
+    await globalThis.redis.set(resourceId, `${new Date().getTime()}|${itemInfo['@microsoft.graph.downloadUrl']}`);
 
 
     return res.redirect(itemInfo['@microsoft.graph.downloadUrl']);

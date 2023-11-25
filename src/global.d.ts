@@ -1,3 +1,4 @@
+/* eslint-disable no-var */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { RequestHandler } from 'express';
 import BaseRequest from './requests/BaseRequest';
@@ -15,12 +16,16 @@ export declare type RouterOptions = {
   children?: Array<RouterOptions>,
 }
 
+declare global {
+  var prisma: PrismaClient;
+  var redis: RedisClientType;
+}
+
+
 declare module 'express' {
   export interface Request {
-    database?: PrismaClient;
     fields?: Record<string, any>;
     userInfo?: User
-    redis?: RedisClientType;
   }
 
 }

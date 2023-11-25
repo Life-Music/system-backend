@@ -30,16 +30,13 @@ redisClient.on('error', err => console.log('Redis Client Error', err))
 
 const app = express();
 
+const prisma = new PrismaClient();
+globalThis.prisma = prisma;
+globalThis.redis = redisClient;
 
 // **** Setup **** //
 
 // Basic middleware
-app.use((req: Request, res, next) => {
-  const prisma = new PrismaClient();
-  req.database = prisma;
-  req.redis = redisClient;
-  next();
-});
 app.use(express.json());
 app.use(cors());
 app.use((req, res, next) => {
@@ -61,14 +58,6 @@ if (EnvVars.NodeEnv === NodeEnvs.Production.valueOf()) {
 // Add APIs, must be after middleware
 app.use('', BaseRouter);
 
-
-app.use((req: Request, res, next) => {
-  if (req.database) {
-    req.database.$disconnect().then(() => {
-      next();
-    });
-  }
-});
 
 // Add error handler
 app.use((

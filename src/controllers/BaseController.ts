@@ -1,8 +1,7 @@
 import { Request, RequestHandler } from 'express';
 import { SuccessResponse } from '../response/SuccessResponse';
-import DatabaseNotReady from '@src/exception/DataBaseNotReadyException';
 
-class BaseController {
+export default class BaseController {
 
   public successResponseAdapter = new SuccessResponse();
 
@@ -15,8 +14,8 @@ class BaseController {
   };
 
   public successWithMeta: SuccessResponse['formatWithMeta'] = (data, meta) => {
-    return this.successResponseAdapter.formatWithMeta(data, meta)
-  }
+    return this.successResponseAdapter.formatWithMeta(data, meta);
+  };
 
   public buildMetaPagination = (totalObject: number, currentPage: number, perPage: number, endPage: number) => {
     return {
@@ -24,24 +23,21 @@ class BaseController {
       current_page: currentPage,
       per_page: perPage,
       end_page: endPage,
-    }
-  }
+    };
+  };
 
   public userInfo: RequestHandler = async (req: Request, res) => {
-    if (req.database) {
-      if (!req.userInfo) return res.json(
-        this.success({}),
-      );
-      const user = await req.database.user.findFirstOrThrow({
-        where: {
-          email: req.userInfo.email,
-        },
-      });
-      return res.json(
-        this.success(user),
-      );
-    }
-    throw new DatabaseNotReady();
+    if (!req.userInfo) return res.json(
+      this.success({}),
+    );
+    const user = await globalThis.prisma.user.findFirstOrThrow({
+      where: {
+        email: req.userInfo.email,
+      },
+    });
+    return res.json(
+      this.success(user),
+    );
   };
 
 }
@@ -49,4 +45,3 @@ class BaseController {
 const controller = new BaseController();
 export const userInfoController = controller.userInfo;
 
-export default BaseController;
