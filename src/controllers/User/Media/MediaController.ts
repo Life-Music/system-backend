@@ -57,8 +57,8 @@ class MediaController extends BaseController {
     if (!req.fields) throw new NoFieldsInitException();
     const userId = req.userInfo?.id as number;
     const fields = req.fields as {
+      page: number,
       take: number,
-      page: number
     };
 
     const where = {
@@ -82,6 +82,16 @@ class MediaController extends BaseController {
                 isLike: true,
               },
             },
+          },
+        },
+        mediaOnAlbum: {
+          select: {
+            album: true,
+          },
+        },
+        mediaOnCategory: {
+          select: {
+            category: true,
           },
         },
       },
@@ -169,7 +179,9 @@ class MediaController extends BaseController {
       title?: string
       description?: string
       viewMode: Status,
-      thumbnailId?: string
+      thumbnailId?: string,
+      albumId?: string,
+      categoryIds: string[],
     };
 
     const data: Prisma.MediaUpdateInput = {
@@ -181,6 +193,24 @@ class MediaController extends BaseController {
         },
       },
     };
+
+    if (fields.albumId) {
+      data.mediaOnAlbum = {
+        upsert: {
+          where: {
+            mediaId_albumId: {
+              albumId: fields.albumId,
+              mediaId: mediaId,
+            },
+          },
+          create: {
+            albumId: fields.albumId,
+          },
+          update: {
+          },
+        },
+      };
+    }
 
     if (fields.thumbnailId) {
       data.thumbnails = {
@@ -197,6 +227,19 @@ class MediaController extends BaseController {
           data: {
             isPrimary: true,
           },
+        },
+      };
+    }
+
+    if (fields.categoryIds) {
+      data.mediaOnCategory = {
+        deleteMany: {
+          mediaId,
+        },
+        createMany: {
+          data: fields.categoryIds.map((categoryId) => ({
+            categoryId,
+          })),
         },
       };
     }

@@ -11,8 +11,9 @@ class BaseRequest {
   public bindToRequest(req: Request) {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const params: Record<string, unknown> = {
-      ...req.params,
+      ...req.query,
       ...req.body,
+      ...req.files,
     };
     req.fields = Object.fromEntries(this.rules().map((rule) => {
       const [key] = Object.entries(rule)[0];
@@ -31,8 +32,30 @@ class BaseRequest {
   public validation = (req: Request) => {
     this.prepareValidation(req);
 
-    const validation = validate(...this.rules().map(rule => Object.entries(rule)).flat());
+    const rules = [...this.rules().map(rule => {
+      const rules = Object.entries(rule);
+      let _source: string = 'body';
+      let data: string[] = [];
+      for (const _rule of rules) {
+        if (_rule[0] === '_source') {
+          _source = _rule[1];
+        }
+        else {
+          data = [_rule[0], _rule[1]];
+        }
+      }
 
+      return [
+        ...data,
+        _source,
+      ];
+    }).flat()] as [
+        string,
+        string,
+        'body' | 'query' | 'params',
+      ];
+
+    const validation = validate(rules);
     this.bindToRequest(req);
 
     return validation;

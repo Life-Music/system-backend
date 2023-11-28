@@ -56,6 +56,7 @@ model User {
   Comment                   Comment[]
   Playlist                  Playlist[]
   UserPaymentMethod         UserPaymentMethod[]
+  Album                     Album[]
 
   @@map("users")
 }
@@ -78,12 +79,12 @@ model Category {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  CategoryOnMedia CategoryOnMedia[]
+  categoryOnMedia MediaOnCategory[]
 
   @@map("categories")
 }
 
-model CategoryOnMedia {
+model MediaOnCategory {
   id         Int      @id @default(autoincrement())
   categoryId String   @map("category_id")
   mediaId    String   @map("media_id")
@@ -127,7 +128,7 @@ model Media {
   audioResources  AudioResource[]
   mediaReaction   MediaReaction[]
   history         History[]
-  categoryOnVideo CategoryOnMedia[]
+  mediaOnCategory MediaOnCategory[]
   comment         Comment[]
   mediaOnPlaylist MediaOnPlaylist[]
   sessionUpload   SessionUpload[]
@@ -314,16 +315,19 @@ model MediaOnAlbum {
   media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   album Album @relation(fields: [albumId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
+  @@unique([mediaId, albumId])
   @@map("media_on_album")
 }
 
 model Album {
-  id        String   @id @default(cuid())
-  name      String
-  userId    Int      @map("user_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+  id          String   @id @default(cuid())
+  name        String
+  description String?  @map("description") @db.Text
+  userId      Int      @map("user_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
 
+  owner        User           @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   mediaOnAlbum MediaOnAlbum[]
 
   @@map("albums")

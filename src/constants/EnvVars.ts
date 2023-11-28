@@ -31,4 +31,10 @@ export default {
     Username: (process.env.ELASTIC_SEARCH_USERNAME ?? ''),
     Password: (process.env.ELASTIC_SEARCH_PASSWORD ?? ''),
   },
+  AWS: {
+    AccessKeyId: (process.env.AWS_ACCESS_KEY ?? ''),
+    SecretAccessKey: (process.env.AWS_SECRET_ACCESS_KEY ?? ''),
+    BucketImage: (process.env.AWS_BUCKET_IMAGE ?? ''),
+    ObjectUrl: (process.env.AWS_OBJECT_URL ?? ''),
+  },
 } as const;

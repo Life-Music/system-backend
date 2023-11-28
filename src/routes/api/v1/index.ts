@@ -15,19 +15,34 @@ import {
   updateMedia,
   uploadMediaDone,
 } from '@src/controllers/User/Media/MediaController';
+import {
+  createAlbum,
+  deleteAlbum,
+  editAlbum,
+  getAlbum,
+  listAlbum,
+  unAssignMediaOnAlbum,
+} from '@src/controllers/User/Album/AlbumController';
 import CreateMediaRequest from '@src/requests/CreateMediaRequest';
-import ListMediaRequest from '@src/requests/ListMediaRequest';
+import BasePaginationRequest from '@src/requests/BasePaginationRequest';
 import UpdateMediaRequest from '@src/requests/UpdateMediaRequest';
 import MediaUploadDoneRequest from '@src/requests/MediaUploadDoneRequest';
+import CreateAlbumRequest from '@src/requests/CreateAlbumRequest';
+import BaseSearchRequest from '@src/requests/BaseSearchRequest';
 import { getLinkStream } from '@src/controllers/Guest/Audio/AudioController';
+import { searchAlbum, searchCategory } from '@src/controllers/Guest/Search/SearchController';
+import { uploadThumbnail } from '@src/controllers/User/Upload/UploadController';
+import { getCategoryRec } from '@src/controllers/Guest/Recommendation/CategoryRecController';
 
 const registerRequest = new RegisterRequest();
 const loginRequest = new LoginRequest();
 const createResumableUploadRequest = new CreateResumableUploadRequest();
 const createMediaRequest = new CreateMediaRequest();
-const listMediaRequest = new ListMediaRequest();
+const basePaginationRequest = new BasePaginationRequest();
 const updateMediaRequest = new UpdateMediaRequest();
 const mediaUploadDoneRequest = new MediaUploadDoneRequest();
+const createAlbumRequest = new CreateAlbumRequest();
+const baseSearchRequest = new BaseSearchRequest();
 
 export const router: RouterOptions = {
   'path': '/api/v1',
@@ -92,7 +107,7 @@ export const router: RouterOptions = {
               path: '',
               method: 'get',
               controller: listMedia,
-              request: listMediaRequest.validation,
+              request: basePaginationRequest.validation,
             },
             {
               path: '/:mediaId',
@@ -116,6 +131,54 @@ export const router: RouterOptions = {
               request: mediaUploadDoneRequest.validation,
               controller: uploadMediaDone,
             },
+            {
+              path: '/:mediaId/thumbnail',
+              children: [
+                {
+                  path: '/upload',
+                  method: 'post',
+                  controller: uploadThumbnail,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          path: '/album',
+          children: [
+            {
+              path: '',
+              method: 'post',
+              controller: createAlbum,
+              request: createAlbumRequest.validation,
+            },
+            {
+              path: '',
+              method: 'get',
+              controller: listAlbum,
+              request: basePaginationRequest.validation,
+            },
+            {
+              path: '/:albumId',
+              method: 'patch',
+              controller: editAlbum,
+              request: createAlbumRequest.validation,
+            },
+            {
+              path: '/:albumId',
+              method: 'delete',
+              controller: deleteAlbum,
+            },
+            {
+              path: '/:albumId',
+              method: 'get',
+              controller: getAlbum,
+            },
+            {
+              path: '/:albumId/:mediaId',
+              method: 'delete',
+              controller: unAssignMediaOnAlbum,
+            },
           ],
         },
       ],
@@ -130,6 +193,39 @@ export const router: RouterOptions = {
               path: '/:resourceId/stream',
               method: 'get',
               controller: getLinkStream,
+            },
+          ],
+        },
+        {
+          path: '/album',
+          children: [
+            {
+              path: '/search',
+              method: 'get',
+              controller: searchAlbum,
+              request: baseSearchRequest.validation,
+            },
+          ],
+        },
+        {
+          path: '/category',
+          children: [
+            {
+              path: '/search',
+              method: 'get',
+              controller: searchCategory,
+              request: baseSearchRequest.validation,
+            },
+          ],
+        },
+        {
+          path: '/recommendation',
+          children: [
+            {
+              path: '/category',
+              method: 'get',
+              request: basePaginationRequest.validation,
+              controller: getCategoryRec,
             },
           ],
         },

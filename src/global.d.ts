@@ -2,8 +2,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { RequestHandler } from 'express';
 import BaseRequest from './requests/BaseRequest';
-import { PrismaClient, User } from '../prisma/generated/mysql';
-import { RedisClientType } from 'redis';
+import type { PrismaClient, User } from '../prisma/generated/mysql';
+import type { RedisClientType } from 'redis';
+import type { S3Client } from '@aws-sdk/client-s3';
 
 export { };
 
@@ -19,6 +20,7 @@ export declare type RouterOptions = {
 declare global {
   var prisma: PrismaClient;
   var redis: RedisClientType;
+  var s3Client: S3Client;
 }
 
 

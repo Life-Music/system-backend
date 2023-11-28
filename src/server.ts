@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import express, { Request, Response, NextFunction } from 'express';
 import 'express-async-errors';
 import logger from 'jet-logger';
+import fileUpload from 'express-fileupload';
 
 import 'express-async-errors';
 
@@ -19,6 +20,7 @@ import { RouteError } from '@src/other/classes';
 import { PrismaClient } from '../prisma/generated/mysql';
 import cors from 'cors';
 import { RedisClientType, createClient } from 'redis';
+import s3Client from '@src/services/S3Client';
 const redisClient: RedisClientType = createClient({
   url: EnvVars.Redis.Uri,
 });
@@ -33,12 +35,14 @@ const app = express();
 const prisma = new PrismaClient();
 globalThis.prisma = prisma;
 globalThis.redis = redisClient;
+globalThis.s3Client = s3Client;
 
 // **** Setup **** //
 
 // Basic middleware
 app.use(express.json());
 app.use(cors());
+app.use(fileUpload());
 app.use((req, res, next) => {
   res.header('cross-origin-resource-policy', 'cross-origin');
   next();
