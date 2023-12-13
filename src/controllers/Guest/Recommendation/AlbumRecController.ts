@@ -4,54 +4,62 @@ import MediaScoped from '@src/scopes/MediaScoped';
 import { Request, Response } from 'express';
 import { Prisma } from '~/prisma/generated/mysql';
 
-class CategoryRecController extends BaseController {
+class AlbumRecController extends BaseController {
 
-  public getCategoryRec = async (req: Request, res: Response) => {
+  public getAlbumRec = async (req: Request, res: Response) => {
     if (!req.fields) throw new NoFieldsInitException();
     const fields = req.fields as {
       page: number,
       take: number,
     };
 
-    const categoryRec = await globalThis.prisma.category.findMany({
+    const albumRec = await globalThis.prisma.album.findMany({
       take: fields.take,
       skip: fields.take * fields.page - fields.take,
       where: {},
+      include: {
+        owner: true,
+      },
     });
 
-    const totalRecords = await globalThis.prisma.category.count({
+    const totalRecords = await globalThis.prisma.album.count({
       where: {},
     });
 
     return res.json(
       this.successWithMeta(
-        categoryRec,
+        albumRec,
         this.buildMetaPagination(totalRecords, fields.page, fields.take, Math.ceil(totalRecords / fields.take)),
       ),
     );
   };
 
-  public getMediaInCategoryRec = async (req: Request, res: Response) => {
+  public getMediaInAlbumRec = async (req: Request, res: Response) => {
     if (!req.fields) throw new NoFieldsInitException();
     const fields = req.fields as {
       page: number,
       take: number,
     };
 
-    const where: Prisma.CategoryWhereInput = {
-      categoryOnMedia: {
+    const where: Prisma.AlbumWhereInput = {
+      mediaOnAlbum: {
         some: {
           media: MediaScoped.published,
         },
       },
     };
 
-    const categoryRec = await globalThis.prisma.category.findMany({
+    const albumRec = await globalThis.prisma.album.findMany({
       take: fields.take,
       skip: fields.take * fields.page - fields.take,
       select: {
         name: true,
-        categoryOnMedia: {
+        mediaOnAlbum: {
+          orderBy: {
+            media: {
+              createdAt: 'desc',
+            },
+          },
           select: {
             media: {
               include: {
@@ -59,44 +67,34 @@ class CategoryRecController extends BaseController {
                 thumbnails: true,
               },
             },
-            createdAt: true,
-            updatedAt: true,
           },
-          orderBy: {
-            media: {
-              createdAt: 'desc',
-            },
-          },
-          take: 10,
         },
       },
-      orderBy: [
-        {
-          createdAt: 'desc',
-        },
-      ],
       where,
+      orderBy: {
+        createdAt: 'desc',
+      },
     });
 
-    const totalRecords = await globalThis.prisma.category.count({
+    const totalRecords = await globalThis.prisma.album.count({
       where,
     });
 
     return res.json(
       this.successWithMeta(
-        categoryRec,
+        albumRec,
         this.buildMetaPagination(totalRecords, fields.page, fields.take, Math.ceil(totalRecords / fields.take)),
       ),
     );
   };
+
 }
 
-const controller = new CategoryRecController();
-
-const getCategoryRec = controller.getCategoryRec;
-const getMediaInCategoryRec = controller.getMediaInCategoryRec;
+const controller = new AlbumRecController();
+const getAlbumRec = controller.getAlbumRec;
+const getMediaInAlbumRec = controller.getMediaInAlbumRec;
 
 export {
-  getCategoryRec,
-  getMediaInCategoryRec,
+  getAlbumRec,
+  getMediaInAlbumRec,
 };

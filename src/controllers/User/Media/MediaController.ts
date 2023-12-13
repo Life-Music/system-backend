@@ -5,12 +5,16 @@ import Jenkins from '@src/util/jenkins';
 import { Request, Response } from 'express';
 import { Media, Status, Prisma } from 'prisma/generated/mysql';
 import elasticSearch from '@src/services/ElasticSearch';
+import MediaScoped from '@src/scopes/MediaScoped';
+import UnexpectedException from '@src/exception/UnexpectedException';
+import queue from '@src/services/queue';
 
 class MediaController extends BaseController {
   public createMedia = async (req: Request, res: Response) => {
+    if (!req.userInfo) throw new UnexpectedException();
     if (!req.fields) throw new NoFieldsInitException();
     const fields = req.fields as Media;
-    const userId = req.userInfo?.id as number;
+    const userId = req.userInfo.id;
 
     const media = await globalThis.prisma.$transaction(async (ctx) => {
       const media = await ctx.media.create({
@@ -28,6 +32,17 @@ class MediaController extends BaseController {
           thumbnails: true,
           audioResources: true,
           videoResources: true,
+          owner: true,
+          mediaOnAlbum: {
+            select: {
+              album: true,
+            },
+          },
+          mediaOnCategory: {
+            select: {
+              category: true,
+            },
+          },
         },
       });
       await elasticSearch.index({
@@ -45,7 +60,8 @@ class MediaController extends BaseController {
       return media;
     });
 
-
+    queue.create('new_media', media).removeOnComplete(true).save();
+    
     return res.json(
       this.success(
         media,
@@ -55,15 +71,37 @@ class MediaController extends BaseController {
 
   public listMedia = async (req: Request, res: Response) => {
     if (!req.fields) throw new NoFieldsInitException();
-    const userId = req.userInfo?.id as number;
+    const userId = req.userInfo?.id;
     const fields = req.fields as {
       page: number,
       take: number,
+      isLike?: boolean,
+      q: string | undefined,
     };
 
-    const where = {
+    let where: Prisma.MediaWhereInput = {
       userId,
     };
+
+    if (fields.isLike !== undefined) {
+      where = {
+        ...where,
+        mediaReaction: {
+          some: {
+            isLike: fields.isLike,
+          },
+        },
+      };
+    }
+
+    if (fields.q) {
+      where = {
+        ...where,
+        title: {
+          contains: fields.q,
+        },
+      };
+    }
 
     const media = await globalThis.prisma.media.findMany({
       take: fields.take,
@@ -74,6 +112,7 @@ class MediaController extends BaseController {
         thumbnails: true,
         audioResources: true,
         videoResources: true,
+        owner: true,
         _count: {
           select: {
             comment: true,
@@ -115,7 +154,7 @@ class MediaController extends BaseController {
   };
 
   public deleteMedia = async (req: Request, res: Response) => {
-    const userId = req.userInfo?.id as number;
+    const userId = req.userInfo?.id;
     const mediaId = req.params.mediaId;
 
     try {
@@ -153,17 +192,57 @@ class MediaController extends BaseController {
   };
 
   public getMedia = async (req: Request, res: Response) => {
+    const userId = req.userInfo?.id;
     const mediaId = req.params.mediaId;
 
     try {
       const media = await globalThis.prisma.media.findUniqueOrThrow({
         where: {
           id: mediaId,
+          AND: MediaScoped.published,
+        },
+        include: {
+          detail: true,
+          audioResources: true,
+          thumbnails: true,
+          owner: true,
+          videoResources: true,
+          _count: {
+            select: {
+              mediaReaction: true,
+            },
+          },
         },
       });
 
+      const mediaCountReaction = await globalThis.prisma.mediaReaction.count({
+        where: {
+          mediaId,
+          isLike: true,
+        },
+      });
+
+      let currentReaction = null;
+
+      if (userId) {
+        currentReaction = await globalThis.prisma.mediaReaction.findUnique({
+          where: {
+            onlyReaction: {
+              userId,
+              mediaId,
+            },
+          },
+        });
+      }
+
       return res.json(
-        this.success(media),
+        this.success({
+          media,
+          reaction: {
+            total: mediaCountReaction,
+            current: currentReaction,
+          },
+        }),
       );
     }
     catch (e) {
@@ -173,7 +252,7 @@ class MediaController extends BaseController {
 
   public updateMedia = async (req: Request, res: Response) => {
     if (!req.fields) throw new NoFieldsInitException();
-    const userId = req.userInfo?.id as number;
+    const userId = req.userInfo?.id;
     const mediaId = req.params.mediaId;
     const fields = req.fields as {
       title?: string
@@ -277,13 +356,14 @@ class MediaController extends BaseController {
       );
     }
     catch (e) {
+      console.error(e);
       throw new ResourceNotFound();
     }
   };
 
   public uploadDone = async (req: Request, res: Response) => {
     if (!req.fields) throw new NoFieldsInitException();
-    const userId = req.userInfo?.id as number;
+    const userId = req.userInfo?.id;
     const mediaId = req.params.mediaId;
     const fields = req.fields as {
       fileId: string

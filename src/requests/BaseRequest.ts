@@ -19,7 +19,7 @@ class BaseRequest {
       const [key] = Object.entries(rule)[0];
       return [
         key,
-        params[key] ?? '',
+        params[key] ?? undefined,
       ];
     }));
   }

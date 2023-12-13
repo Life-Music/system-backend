@@ -46,11 +46,13 @@
     "jet-validator": "^1.1.1",
     "jsonfile": "^6.1.0",
     "jsonwebtoken": "^9.0.2",
+    "kue": "^0.11.6",
     "md5": "^2.3.0",
     "module-alias": "^2.2.3",
     "morgan": "^1.10.0",
     "redis": "^4.6.10",
-    "ts-command-line-args": "^2.5.1"
+    "ts-command-line-args": "^2.5.1",
+    "web-push": "^3.6.6"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.4",
@@ -62,10 +64,12 @@
     "@types/jasmine": "^5.1.0",
     "@types/jsonfile": "^6.1.2",
     "@types/jsonwebtoken": "^9.0.3",
+    "@types/kue": "^0.11.17",
     "@types/md5": "^2.3.4",
     "@types/morgan": "^1.9.6",
     "@types/node": "^20.8.6",
     "@types/supertest": "^2.0.14",
+    "@types/web-push": "^3.6.3",
     "@typescript-eslint/eslint-plugin": "^6.7.5",
     "@typescript-eslint/parser": "^6.7.5",
     "eslint": "^8.51.0",

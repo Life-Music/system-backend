@@ -1,5 +1,7 @@
 import { Request, RequestHandler } from 'express';
 import { SuccessResponse } from '../response/SuccessResponse';
+import UnexpectedException from '@src/exception/UnexpectedException';
+import NoFieldsInitException from '@src/exception/NoFieldsInitException';
 
 export default class BaseController {
 
@@ -40,8 +42,29 @@ export default class BaseController {
     );
   };
 
+  public saveWebPushSubscription: RequestHandler = async (req: Request, res) => {
+    if(!req.userInfo) throw new UnexpectedException();
+    const userId = req.userInfo.id;
+    if (!req.fields) throw new NoFieldsInitException();
+    const fields = req.fields as {
+      subscriptionToken: string
+    };
+
+    await globalThis.prisma.notificationSubscriptions.create({
+      data: {
+        subscription: fields.subscriptionToken,
+        userId,
+      },
+    });
+
+    return res.json(
+      this.success({}),
+    );
+  };
+
 }
 
 const controller = new BaseController();
 export const userInfoController = controller.userInfo;
+export const saveWebPushSubscription = controller.saveWebPushSubscription;
 

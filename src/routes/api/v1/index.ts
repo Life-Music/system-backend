@@ -4,7 +4,7 @@ import { onlyAuth, onlyGuest, setUserInfo } from '@src/middleware/auth';
 import RegisterRequest from '@src/requests/RegisterRequest';
 import LoginRequest from '@src/requests/LoginRequest';
 import { loginController } from '@src/controllers/Guest/Auth/LoginController';
-import { userInfoController } from '@src/controllers/BaseController';
+import { saveWebPushSubscription, userInfoController } from '@src/controllers/BaseController';
 import { createResumableUploadController } from '@src/controllers/User/Media/ResumableUploadController';
 import { CreateResumableUploadRequest } from '@src/requests/CreateResumableUploadRequest';
 import {
@@ -32,7 +32,31 @@ import BaseSearchRequest from '@src/requests/BaseSearchRequest';
 import { getLinkStream } from '@src/controllers/Guest/Audio/AudioController';
 import { searchAlbum, searchCategory } from '@src/controllers/Guest/Search/SearchController';
 import { uploadThumbnail } from '@src/controllers/User/Upload/UploadController';
-import { getCategoryRec } from '@src/controllers/Guest/Recommendation/CategoryRecController';
+import { getCategoryRec, getMediaInCategoryRec } from '@src/controllers/Guest/Recommendation/CategoryRecController';
+import { mediaNewest, mediaRelated } from '@src/controllers/Guest/HomeController';
+import { getAlbumRec, getMediaInAlbumRec } from '@src/controllers/Guest/Recommendation/AlbumRecController';
+import { getHistoryMedia, saveHistoryMedia } from '@src/controllers/User/History/HistoryMediaController';
+import CreateHistoryMediaRequest from '@src/requests/CreateHistoryMediaRequest';
+import { deleteComment, getComments, saveComment } from '@src/controllers/User/Comment/CommentController';
+import CreateCommentRequest from '@src/requests/CreateCommentRequest';
+import { saveMediaReaction } from '@src/controllers/User/Reaction/MediaReactionController';
+import UpdateReactionMediaRequest from '@src/requests/UpdateReactionMediaRequest';
+import {
+  assignMediaOnPlaylist,
+  createPlaylist,
+  deletePlaylist,
+  getPlaylist,
+  getPlaylists,
+  unassignMediaFromPlaylist,
+  updatePlaylist,
+  updateSortNoMediaInPlaylist,
+} from '@src/controllers/User/Playlist/PlaylistController';
+import CreatePlayListRequest from '@src/requests/CreatePlaylistRequest';
+import UpdateSortNoMediaInPlaylistRequest from '@src/requests/UpdateSortNoMediaInPlaylistRequest';
+import ListMediaRequest from '@src/requests/ListMediaRequest';
+import { getArtist, listArtist, subscribeArtist } from '@src/controllers/User/Artist/ArtistController';
+import ListArtistRequest from '@src/requests/ListArtistRequest';
+import CreateWebPushSubscriptionRequest from '@src/requests/CreateWebPushSubscriptionRequest';
 
 const registerRequest = new RegisterRequest();
 const loginRequest = new LoginRequest();
@@ -42,6 +66,14 @@ const basePaginationRequest = new BasePaginationRequest();
 const updateMediaRequest = new UpdateMediaRequest();
 const mediaUploadDoneRequest = new MediaUploadDoneRequest();
 const createAlbumRequest = new CreateAlbumRequest();
+const createHistoryMediaRequest = new CreateHistoryMediaRequest();
+const createCommentRequest = new CreateCommentRequest();
+const updateReactionMediaRequest = new UpdateReactionMediaRequest();
+const createPlayListRequest = new CreatePlayListRequest();
+const updateSortNoMediaInPlaylistRequest = new UpdateSortNoMediaInPlaylistRequest();
+const listMediaRequest = new ListMediaRequest();
+const listArtistRequest = new ListArtistRequest();
+const createWebPushSubscriptionRequest = new CreateWebPushSubscriptionRequest();
 const baseSearchRequest = new BaseSearchRequest();
 
 export const router: RouterOptions = {
@@ -78,6 +110,160 @@ export const router: RouterOptions = {
           method: 'get',
           controller: userInfoController,
         },
+        {
+          path: '/history',
+          children: [
+            {
+              path: '/media',
+              method: 'get',
+              request: basePaginationRequest.validation,
+              controller: getHistoryMedia,
+            },
+            {
+              path: '/media',
+              method: 'post',
+              request: createHistoryMediaRequest.validation,
+              controller: saveHistoryMedia,
+            },
+          ],
+        },
+        {
+          path: '/notification/subscribe',
+          method: 'post',
+          controller: saveWebPushSubscription,
+          request: createWebPushSubscriptionRequest.validation,
+        },
+        {
+          path: '/playlist',
+          middleware: [
+            onlyAuth,
+          ],
+          children: [
+            {
+              path: '',
+              method: 'get',
+              controller: getPlaylists,
+            },
+            {
+              path: '',
+              method: 'post',
+              request: createPlayListRequest.validation,
+              controller: createPlaylist,
+            },
+            {
+              path: '/:playlistId',
+              request: createPlayListRequest.validation,
+              controller: updatePlaylist,
+              method: 'patch',
+            },
+            {
+              path: '/:playlistId',
+              controller: deletePlaylist,
+              method: 'delete',
+            },
+            {
+              path: '/:playlistId',
+              method: 'get',
+              controller: getPlaylist,
+            },
+            {
+              path: '/:playlistId/sort_no',
+              method: 'put',
+              request: updateSortNoMediaInPlaylistRequest.validation,
+              controller: updateSortNoMediaInPlaylist,
+            },
+            {
+              path: '/:playlistId/:mediaId',
+              method: 'post',
+              controller: assignMediaOnPlaylist,
+            },
+            {
+              path: '/:playlistId/:mediaId',
+              method: 'delete',
+              controller: unassignMediaFromPlaylist,
+            },
+          ],
+        },
+        {
+          path: '/media',
+          children: [
+            {
+              path: '',
+              method: 'get',
+              controller: listMedia,
+              request: listMediaRequest.validation,
+            },
+            {
+              path: '/:mediaId',
+              method: 'get',
+              controller: getMedia,
+              children: [
+                {
+                  path: '/comment',
+                  children: [
+                    {
+                      path: '',
+                      method: 'post',
+                      middleware: [
+                        onlyAuth,
+                      ],
+                      request: createCommentRequest.validation,
+                      controller: saveComment,
+                    },
+                    {
+                      path: '',
+                      method: 'get',
+                      request: basePaginationRequest.validation,
+                      controller: getComments,
+                    },
+                    {
+                      path: '/:commentId',
+                      middleware: [
+                        onlyAuth,
+                      ],
+                      method: 'delete',
+                      controller: deleteComment,
+                    },
+                  ],
+                },
+                {
+                  path: '/reaction',
+                  children: [
+                    {
+                      path: '',
+                      method: 'post',
+                      middleware: [
+                        onlyAuth,
+                      ],
+                      request: updateReactionMediaRequest.validation,
+                      controller: saveMediaReaction,
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        {
+          path: '/artist',
+          request: listArtistRequest.validation,
+          controller: listArtist,
+          method: 'get',
+          children: [
+            {
+              path: '/:artistId',
+              method: 'get',
+              controller: getArtist,
+              children: [
+                {
+                  path: '/subscribe',
+                  method: 'post',
+                  controller: subscribeArtist,
+                },
+              ],
+            },
+          ],
+        },
       ],
 
     },
@@ -107,7 +293,7 @@ export const router: RouterOptions = {
               path: '',
               method: 'get',
               controller: listMedia,
-              request: basePaginationRequest.validation,
+              request: listMediaRequest.validation,
             },
             {
               path: '/:mediaId',
@@ -226,6 +412,43 @@ export const router: RouterOptions = {
               method: 'get',
               request: basePaginationRequest.validation,
               controller: getCategoryRec,
+              children: [
+                {
+                  path: '/media',
+                  method: 'get',
+                  request: basePaginationRequest.validation,
+                  controller: getMediaInCategoryRec,
+                },
+              ],
+            },
+            {
+              path: '/album',
+              method: 'get',
+              request: basePaginationRequest.validation,
+              controller: getAlbumRec,
+              children: [
+                {
+                  path: '/media',
+                  method: 'get',
+                  request: basePaginationRequest.validation,
+                  controller: getMediaInAlbumRec,
+                },
+              ],
+            },
+            {
+              path: '/media',
+              children: [
+                {
+                  path: '/newest',
+                  method: 'get',
+                  controller: mediaNewest,
+                },
+                {
+                  path: '/:mediaId',
+                  method: 'get',
+                  controller: mediaRelated,
+                },
+              ],
             },
           ],
         },

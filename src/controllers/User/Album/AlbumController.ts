@@ -4,11 +4,13 @@ import { Request, Response } from 'express';
 import { TBasePaginationRequest } from '@src/requests/BasePaginationRequest';
 import ResourceNotFound from '@src/exception/ResourceNotFound';
 import elasticSearch from '@src/services/ElasticSearch';
+import UnexpectedException from '@src/exception/UnexpectedException';
 
 class AlbumController extends BaseController {
   public createAlbum = async (req: Request, res: Response) => {
+    if (!req.userInfo) throw new UnexpectedException();
     if (!req.fields) throw new NoFieldsInitException();
-    const userId = req.userInfo?.id as number;
+    const userId = req.userInfo.id;
     const fields = req.fields as {
       name: string
       description: string
@@ -39,7 +41,7 @@ class AlbumController extends BaseController {
     );
   };
   public listAlbum = async (req: Request, res: Response) => {
-    const userId = req.userInfo?.id as number;
+    const userId = req.userInfo?.id;
     const fields = req.fields as TBasePaginationRequest;
     const where = {
       userId,
@@ -68,8 +70,9 @@ class AlbumController extends BaseController {
   };
 
   public editAlbum = async (req: Request, res: Response) => {
+    if (!req.userInfo) throw new UnexpectedException();
     if (!req.fields) throw new NoFieldsInitException();
-    const userId = req.userInfo?.id as number;
+    const userId = req.userInfo?.id;
     const fields = req.fields as {
       name: string
       description: string
@@ -110,7 +113,8 @@ class AlbumController extends BaseController {
   };
 
   public deleteAlbum = async (req: Request, res: Response) => {
-    const userId = req.userInfo?.id as number;
+    if (!req.userInfo) throw new UnexpectedException();
+    const userId = req.userInfo.id;
     const albumId = req.params.albumId;
 
     try {

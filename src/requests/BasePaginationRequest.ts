@@ -1,6 +1,5 @@
 import { Request } from 'express';
 import BaseRequest from './BaseRequest';
-import { PerPages } from '@src/constants/misc';
 
 export type TBasePaginationRequest = {
   take: number;
@@ -11,17 +10,19 @@ export default class BasePaginationRequest extends BaseRequest {
 
   public prepareValidation(req: Request): void {
 
-    req.body.take ??= PerPages.LIST_MEDIA;
-    req.body.page ??= 1;
+    req.query.take = parseInt(req.query.take as string) || 10;
+    req.query.page = parseInt(req.query.page as string) || 1;
   }
 
   public rules(): Record<string, string>[] {
     return [
       {
         take: 'number',
+        _source: 'query',
       },
       {
         page: 'number',
+        _source: 'query',
       },
     ];
   }

@@ -5,7 +5,9 @@ import jwt from 'jsonwebtoken';
 
 export const onlyAuth: RequestHandler = (req: Request, res, next) => {
   const invalid = () => {
-    throw new Error('Tính năng này chỉ dành cho người dùng đã đăng nhập!');
+    res.status(401).json({
+      error: 'Tính năng này chỉ dành cho người dùng đã đăng nhập!',
+    });
   };
   const token = req.headers.authorization?.split('Bearer ')[1];
   if (!token) {

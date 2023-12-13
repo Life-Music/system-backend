@@ -27,6 +27,7 @@ declare global {
 declare module 'express' {
   export interface Request {
     fields?: Record<string, any>;
+    query: Record<string, any>;
     userInfo?: User
   }
 

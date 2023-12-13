@@ -37,4 +37,8 @@ export default {
     BucketImage: (process.env.AWS_BUCKET_IMAGE ?? ''),
     ObjectUrl: (process.env.AWS_OBJECT_URL ?? ''),
   },
+  WebPush: {
+    PublicKey: (process.env.WEBPUSH_PUBLIC_KEY ?? ''),
+    PrivateKey: (process.env.WEBPUSH_PRIVATE_KEY ?? ''),
+  },
 } as const;
