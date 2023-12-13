@@ -61,7 +61,7 @@ class MediaController extends BaseController {
     });
 
     queue.create('new_media', media).removeOnComplete(true).save();
-    
+
     return res.json(
       this.success(
         media,
@@ -83,11 +83,12 @@ class MediaController extends BaseController {
       userId,
     };
 
-    if (fields.isLike !== undefined) {
+    if (fields.isLike !== undefined && userId) {
       where = {
         ...where,
         mediaReaction: {
           some: {
+            userId,
             isLike: fields.isLike,
           },
         },

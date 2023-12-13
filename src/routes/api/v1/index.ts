@@ -57,6 +57,7 @@ import ListMediaRequest from '@src/requests/ListMediaRequest';
 import { getArtist, listArtist, subscribeArtist } from '@src/controllers/User/Artist/ArtistController';
 import ListArtistRequest from '@src/requests/ListArtistRequest';
 import CreateWebPushSubscriptionRequest from '@src/requests/CreateWebPushSubscriptionRequest';
+import { trending } from '@src/controllers/Trending/TrendingController';
 
 const registerRequest = new RegisterRequest();
 const loginRequest = new LoginRequest();
@@ -109,6 +110,11 @@ export const router: RouterOptions = {
           path: '/me',
           method: 'get',
           controller: userInfoController,
+        },
+        {
+          path: '/trending',
+          method: 'get',
+          controller: trending,
         },
         {
           path: '/history',
