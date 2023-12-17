@@ -41,4 +41,9 @@ export default {
     PublicKey: (process.env.WEBPUSH_PUBLIC_KEY ?? ''),
     PrivateKey: (process.env.WEBPUSH_PRIVATE_KEY ?? ''),
   },
+  Google: {
+    ClientId: (process.env.GOOGLE_CLIENT_ID ?? ''),
+    ClientSecret: (process.env.GOOGLE_CLIENT_SECRET ?? ''),
+    RedirectUri: (process.env.GOOGLE_REDIRECT_URI ?? ''),
+  },
 } as const;

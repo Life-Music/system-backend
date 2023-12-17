@@ -36,6 +36,9 @@ class HomeController extends BaseController {
               },
             },
           },
+          where: {
+            media: MediaScoped.published,
+          },
           take: 10,
         },
       },
@@ -43,6 +46,7 @@ class HomeController extends BaseController {
         categoryOnMedia: {
           some: {
             mediaId,
+            media: MediaScoped.published,
           },
         },
       },

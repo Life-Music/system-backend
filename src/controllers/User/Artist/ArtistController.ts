@@ -1,6 +1,7 @@
 import BaseController from '@src/controllers/BaseController';
 import NoFieldsInitException from '@src/exception/NoFieldsInitException';
 import UnexpectedException from '@src/exception/UnexpectedException';
+import MediaScoped from '@src/scopes/MediaScoped';
 import { Request, Response } from 'express';
 import { Prisma } from '~/prisma/generated/mysql';
 
@@ -15,11 +16,14 @@ class ArtistController extends BaseController {
       include: {
         _count: {
           select: {
-            subscribers: true,
-            media: true,
+            channel: true,
+            media: {
+              where: MediaScoped.published,
+            },
           },
         },
         media: {
+          where: MediaScoped.published,
           include: {
             thumbnails: true,
             owner: true,
@@ -149,14 +153,14 @@ class ArtistController extends BaseController {
       include: {
         _count: {
           select: {
-            subscribers: true,
+            channel: true,
             media: true,
           },
         },
       },
       orderBy: [
         {
-          subscribers: {
+          channel: {
             _count: 'desc',
           },
         },

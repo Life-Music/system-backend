@@ -9,6 +9,27 @@ class SearchController extends BaseController {
     const fields = req.fields as {
       q: string,
     };
+
+    const userId = req.userInfo?.id;
+
+    const query: any = {
+      'bool': {
+        'must': [
+          {
+            'match': {
+              name: fields.q,
+            },
+          },
+        ],
+      },
+    };
+
+    if (userId) query.bool.must.push({
+      'match': {
+        userId: userId.toString(),
+      },
+    });
+
     const result = await elasticSearch.search({
       index: 'album',
       'sort': [
@@ -23,24 +44,7 @@ class SearchController extends BaseController {
           'field': '*',
         },
       ],
-      'query': {
-        'bool': {
-          'must': [
-            {
-              'bool': {
-                'should': [
-                  {
-                    'match': {
-                      name: fields.q,
-                    },
-                  },
-                ],
-                'minimum_should_match': 1,
-              },
-            },
-          ],
-        },
-      },
+      query,
     });
 
     const albums = result.hits.hits;

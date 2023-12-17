@@ -36,6 +36,9 @@ export default class BaseController {
       where: {
         email: req.userInfo.email,
       },
+      include: {
+        SocialAccount: true,
+      },
     });
     return res.json(
       this.success(user),
@@ -43,7 +46,7 @@ export default class BaseController {
   };
 
   public saveWebPushSubscription: RequestHandler = async (req: Request, res) => {
-    if(!req.userInfo) throw new UnexpectedException();
+    if (!req.userInfo) throw new UnexpectedException();
     const userId = req.userInfo.id;
     if (!req.fields) throw new NoFieldsInitException();
     const fields = req.fields as {

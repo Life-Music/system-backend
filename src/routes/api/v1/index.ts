@@ -12,6 +12,7 @@ import {
   deleteMedia,
   getMedia,
   listMedia,
+  listMediaLiked,
   updateMedia,
   uploadMediaDone,
 } from '@src/controllers/User/Media/MediaController';
@@ -57,7 +58,10 @@ import ListMediaRequest from '@src/requests/ListMediaRequest';
 import { getArtist, listArtist, subscribeArtist } from '@src/controllers/User/Artist/ArtistController';
 import ListArtistRequest from '@src/requests/ListArtistRequest';
 import CreateWebPushSubscriptionRequest from '@src/requests/CreateWebPushSubscriptionRequest';
+import GetInfoGoogleRequest from '@src/requests/GetInfoGoogleRequest';
 import { trending } from '@src/controllers/Trending/TrendingController';
+import { getGoogleInfo } from '@src/controllers/User/Google/GoogleController';
+import { disableSocialAccount } from '@src/controllers/User/SocialAccount/SocialAccountController';
 
 const registerRequest = new RegisterRequest();
 const loginRequest = new LoginRequest();
@@ -75,6 +79,7 @@ const updateSortNoMediaInPlaylistRequest = new UpdateSortNoMediaInPlaylistReques
 const listMediaRequest = new ListMediaRequest();
 const listArtistRequest = new ListArtistRequest();
 const createWebPushSubscriptionRequest = new CreateWebPushSubscriptionRequest();
+const getInfoGoogleRequest = new GetInfoGoogleRequest();
 const baseSearchRequest = new BaseSearchRequest();
 
 export const router: RouterOptions = {
@@ -110,6 +115,17 @@ export const router: RouterOptions = {
           path: '/me',
           method: 'get',
           controller: userInfoController,
+        },
+        {
+          path: '/album',
+          children: [
+            {
+              path: '/search',
+              method: 'get',
+              controller: searchAlbum,
+              request: baseSearchRequest.validation,
+            },
+          ],
         },
         {
           path: '/trending',
@@ -197,6 +213,12 @@ export const router: RouterOptions = {
               path: '',
               method: 'get',
               controller: listMedia,
+              request: listMediaRequest.validation,
+            },
+            {
+              path: '/liked',
+              method: 'get',
+              controller: listMediaLiked,
               request: listMediaRequest.validation,
             },
             {
@@ -373,6 +395,27 @@ export const router: RouterOptions = {
             },
           ],
         },
+        {
+          path: '/google',
+          children: [
+            {
+              path: '/auth-info',
+              method: 'post',
+              request: getInfoGoogleRequest.validation,
+              controller: getGoogleInfo,
+            },
+          ],
+        },
+        {
+          path: '/social-account',
+          children: [
+            {
+              path: '/:id/disable',
+              method: 'patch',
+              controller: disableSocialAccount,
+            },
+          ],
+        },
       ],
     },
     {
@@ -385,17 +428,6 @@ export const router: RouterOptions = {
               path: '/:resourceId/stream',
               method: 'get',
               controller: getLinkStream,
-            },
-          ],
-        },
-        {
-          path: '/album',
-          children: [
-            {
-              path: '/search',
-              method: 'get',
-              controller: searchAlbum,
-              request: baseSearchRequest.validation,
             },
           ],
         },

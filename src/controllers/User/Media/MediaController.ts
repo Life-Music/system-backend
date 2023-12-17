@@ -8,6 +8,7 @@ import elasticSearch from '@src/services/ElasticSearch';
 import MediaScoped from '@src/scopes/MediaScoped';
 import UnexpectedException from '@src/exception/UnexpectedException';
 import queue from '@src/services/queue';
+import { error } from 'console';
 
 class MediaController extends BaseController {
   public createMedia = async (req: Request, res: Response) => {
@@ -75,25 +76,19 @@ class MediaController extends BaseController {
     const fields = req.fields as {
       page: number,
       take: number,
-      isLike?: boolean,
       q: string | undefined,
     };
 
     let where: Prisma.MediaWhereInput = {
-      userId,
-    };
-
-    if (fields.isLike !== undefined && userId) {
-      where = {
-        ...where,
-        mediaReaction: {
-          some: {
-            userId,
-            isLike: fields.isLike,
-          },
+      OR: [
+        {
+          userId: userId,
         },
-      };
-    }
+        {
+          AND: MediaScoped.published,
+        },
+      ],
+    };
 
     if (fields.q) {
       where = {
@@ -154,23 +149,99 @@ class MediaController extends BaseController {
     );
   };
 
+  public listMediaLiked = async (req: Request, res: Response) => {
+    if (!req.fields) throw new NoFieldsInitException();
+    const userId = req.userInfo?.id;
+    const fields = req.fields as {
+      page: number,
+      take: number,
+      isLike?: boolean,
+      q: string | undefined,
+    };
+
+    const where: Prisma.MediaReactionWhereInput = {
+      userId,
+      media: MediaScoped.published,
+    };
+
+    const media = await globalThis.prisma.mediaReaction.findMany({
+      take: fields.take,
+      skip: fields.take * fields.page - fields.take,
+      where,
+      select: {
+        media: {
+          include: {
+            detail: true,
+            thumbnails: true,
+            audioResources: true,
+            videoResources: true,
+            owner: true,
+            _count: {
+              select: {
+                comment: true,
+                mediaReaction: {
+                  where: {
+                    isLike: true,
+                  },
+                },
+              },
+            },
+            mediaOnAlbum: {
+              select: {
+                album: true,
+              },
+            },
+            mediaOnCategory: {
+              select: {
+                category: true,
+              },
+            },
+          },
+        },
+        createdAt: true,
+      },
+      orderBy: [
+        {
+          createdAt: 'desc',
+        },
+      ],
+    });
+
+    const totalObject = await globalThis.prisma.mediaReaction.count({
+      where,
+    });
+
+    return res.json(
+      this.successWithMeta(
+        media,
+        this.buildMetaPagination(totalObject, fields.page, fields.take, Math.ceil(totalObject / fields.take)),
+      ),
+    );
+  };
+
   public deleteMedia = async (req: Request, res: Response) => {
     const userId = req.userInfo?.id;
     const mediaId = req.params.mediaId;
 
     try {
+      console.log(mediaId);
+
       const media = await globalThis.prisma.$transaction(async (ctx) => {
         const media = await ctx.media.delete({
           where: {
-            userId,
+            // userId,
             id: mediaId,
           },
         });
-
-        await elasticSearch.delete({
-          index: 'media',
-          id: media.id,
-        });
+        try {
+          await elasticSearch.delete({
+            index: 'media',
+            id: media.id,
+          });
+        }
+        catch (e) {
+          error(e);
+        }
         // try {
         //   await oneDrive.deleteItem(mediaId);
         // }
@@ -188,6 +259,7 @@ class MediaController extends BaseController {
       );
     }
     catch (e) {
+      error(e);
       throw new ResourceNotFound();
     }
   };
@@ -337,18 +409,23 @@ class MediaController extends BaseController {
           data,
         });
 
-        await elasticSearch.update({
-          index: 'media',
-          id: media.id.toString(),
-          doc: {
+        try {
+          await elasticSearch.update({
+            index: 'media',
             id: media.id.toString(),
-            name: media.title,
-            status: media.status,
-            published_at: media.publishedAt,
-            locked_at: media.lockedAt,
-            view_mode: media.viewMode,
-          },
-        });
+            doc: {
+              id: media.id.toString(),
+              name: media.title,
+              status: media.status,
+              published_at: media.publishedAt,
+              locked_at: media.lockedAt,
+              view_mode: media.viewMode,
+            },
+          });
+        }
+        catch (e) {
+          error(e);
+        }
         return media;
       });
 
@@ -409,6 +486,7 @@ class MediaController extends BaseController {
 const controller = new MediaController();
 const createMedia = controller.createMedia;
 const listMedia = controller.listMedia;
+const listMediaLiked = controller.listMediaLiked;
 const deleteMedia = controller.deleteMedia;
 const getMedia = controller.getMedia;
 const updateMedia = controller.updateMedia;
@@ -421,4 +499,5 @@ export {
   getMedia,
   updateMedia,
   uploadMediaDone,
+  listMediaLiked,
 };

@@ -16,8 +16,11 @@ class MediaReactionController extends BaseController {
     const fields = req.fields as {
       type: string,
     };
+
+    let reaction;
+
     try {
-      const reaction = await globalThis.prisma.mediaReaction.delete({
+      reaction = await globalThis.prisma.mediaReaction.delete({
         where: {
           onlyReaction: {
             userId: userId,
@@ -27,32 +30,29 @@ class MediaReactionController extends BaseController {
         },
       });
 
-      if (reaction) {
-        return res.json(
-          this.success(reaction),
-        );
-      }
     }
     catch (e) {
       //
     }
 
-    const reaction = await globalThis.prisma.mediaReaction.upsert({
-      where: {
-        onlyReaction: {
+    if (!reaction)
+
+      reaction = await globalThis.prisma.mediaReaction.upsert({
+        where: {
+          onlyReaction: {
+            userId,
+            mediaId,
+          },
+        },
+        create: {
           userId,
           mediaId,
+          isLike: fields.type === 'like',
         },
-      },
-      create: {
-        userId,
-        mediaId,
-        isLike: fields.type === 'like',
-      },
-      update: {
-        isLike: fields.type === 'like',
-      },
-    });
+        update: {
+          isLike: fields.type === 'like',
+        },
+      });
 
     const mediaCountReaction = await globalThis.prisma.mediaReaction.count({
       where: {

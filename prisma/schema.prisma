@@ -35,6 +35,10 @@ enum Status {
   PRIVATE
 }
 
+enum AccountType {
+  YOUTUBE
+}
+
 model User {
   id        String    @id @default(cuid())
   firstName String    @map("first_name")
@@ -57,6 +61,7 @@ model User {
   Playlist                  Playlist[]
   UserPaymentMethod         UserPaymentMethod[]
   Album                     Album[]
+  SocialAccount             SocialAccount[]
 
   @@map("users")
 }
@@ -125,18 +130,19 @@ model Media {
   lockedAt    DateTime?      @map("locked_at")
   publishedAt DateTime?      @map("published_at")
 
-  owner           User              @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  thumbnails      Thumbnail[]
-  detail          MediaDetail?
-  videoResources  VideoResource[]
-  audioResources  AudioResource[]
-  mediaReaction   MediaReaction[]
-  history         History[]
-  mediaOnCategory MediaOnCategory[]
-  comment         Comment[]
-  mediaOnPlaylist MediaOnPlaylist[]
-  sessionUpload   SessionUpload[]
-  mediaOnAlbum    MediaOnAlbum[]
+  owner                User                   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  thumbnails           Thumbnail[]
+  detail               MediaDetail?
+  videoResources       VideoResource[]
+  audioResources       AudioResource[]
+  mediaReaction        MediaReaction[]
+  history              History[]
+  mediaOnCategory      MediaOnCategory[]
+  comment              Comment[]
+  mediaOnPlaylist      MediaOnPlaylist[]
+  sessionUpload        SessionUpload[]
+  mediaOnAlbum         MediaOnAlbum[]
+  MediaOnSocialAccount MediaOnSocialAccount[]
 
   @@map("media")
 }
@@ -284,7 +290,7 @@ model Thumbnail {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  media Media @relation(fields: [mediaId], references: [id])
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
 
   @@map("thumbnails")
 }
@@ -337,4 +343,40 @@ model Album {
   mediaOnAlbum MediaOnAlbum[]
 
   @@map("albums")
+}
+
+model MediaOnSocialAccount {
+  id              Int      @id @default(autoincrement())
+  socialAccountId Int      @map("social_account_id")
+  mediaSocialId   String   @map("media_social_id")
+  mediaId         String   @map("media_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
+
+  media         Media         @relation(fields: [mediaId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  socialAccount SocialAccount @relation(fields: [socialAccountId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([socialAccountId, mediaSocialId, mediaId])
+  @@map("media_on_social_account")
+}
+
+model SocialAccount {
+  id           Int         @id @default(autoincrement())
+  userId       String      @map("user_id")
+  type         AccountType @default(YOUTUBE)
+  fullName     String      @map("full_name")
+  avatarUrl    String?     @map("avatar_url")
+  accountUrl   String?     @map("account_url")
+  accessToken  String?     @map("access_token") @db.Text
+  refreshToken String?     @map("refresh_token") @db.Text
+  expiredAt    DateTime    @map("expired_at")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @default(now()) @updatedAt @map("updated_at")
+  disabledAt   DateTime?   @map("disabled_at")
+
+  owner                User                   @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  MediaOnSocialAccount MediaOnSocialAccount[]
+
+  @@unique([userId, accountUrl, type])
+  @@map("user_accounts")
 }

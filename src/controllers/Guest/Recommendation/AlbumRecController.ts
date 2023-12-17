@@ -60,6 +60,9 @@ class AlbumRecController extends BaseController {
               createdAt: 'desc',
             },
           },
+          where: {
+            media: MediaScoped.published,
+          },
           select: {
             media: {
               include: {
