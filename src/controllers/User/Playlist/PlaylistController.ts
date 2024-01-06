@@ -101,6 +101,29 @@ class PlaylistController extends BaseController {
         where: {
           userId,
         },
+        include: {
+          MediaOnPlaylist: {
+            take: 1,
+            orderBy: {
+              createdAt: 'desc',
+            },
+            select: {
+              media: {
+                select: {
+                  thumbnails: {
+                    where: {
+                      isPrimary: true,
+                    },
+                    take: 1,
+                  },
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
       });
 
       return res.json(

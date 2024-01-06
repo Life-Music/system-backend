@@ -40,11 +40,89 @@ class UploadController extends BaseController {
       });
 
   };
+
+  public uploadAvatar = async (req: Request, res: Response) => {
+    if (!req.userInfo) throw new UnexpectedException();
+    if (!req.files?.file) throw new NoFieldsInitException();
+    const targetFile = req.files.file as UploadedFile;
+    const fileName = `${targetFile.md5}.${targetFile.name.split('.').at(-1)}`;
+    const params = {
+      'Body': targetFile.data,
+      'Bucket': EnvVars.AWS.BucketImage,
+      'Key': fileName,
+    };
+    const command = new PutObjectCommand(params);
+    const userId = req.userInfo.id;
+    await globalThis.s3Client.send(command)
+      .then(() => {
+        const url = new URL(EnvVars.AWS.ObjectUrl);
+        url.pathname = fileName;
+        return globalThis.prisma.user.update({
+          where: {
+            id: userId,
+          },
+          data: {
+            avatar: url.href,
+          },
+        });
+      })
+      .then((thumbnail => {
+        res.json(
+          this.success(thumbnail),
+        );
+      }))
+      .catch((e) => {
+        console.error(e);
+        throw new UnexpectedException();
+      });
+
+  };
+
+  public uploadCover = async (req: Request, res: Response) => {
+    if (!req.userInfo) throw new UnexpectedException();
+    if (!req.files?.file) throw new NoFieldsInitException();
+    const targetFile = req.files.file as UploadedFile;
+    const fileName = `${targetFile.md5}.${targetFile.name.split('.').at(-1)}`;
+    const params = {
+      'Body': targetFile.data,
+      'Bucket': EnvVars.AWS.BucketImage,
+      'Key': fileName,
+    };
+    const command = new PutObjectCommand(params);
+    const userId = req.userInfo.id;
+    await globalThis.s3Client.send(command)
+      .then(() => {
+        const url = new URL(EnvVars.AWS.ObjectUrl);
+        url.pathname = fileName;
+        return globalThis.prisma.user.update({
+          where: {
+            id: userId,
+          },
+          data: {
+            cover: url.href,
+          },
+        });
+      })
+      .then((thumbnail => {
+        res.json(
+          this.success(thumbnail),
+        );
+      }))
+      .catch((e) => {
+        console.error(e);
+        throw new UnexpectedException();
+      });
+
+  };
 }
 
 const controller = new UploadController();
 const uploadThumbnail = controller.uploadThumbnail;
+const uploadAvatar = controller.uploadAvatar;
+const uploadCover = controller.uploadCover;
 
 export {
   uploadThumbnail,
+  uploadAvatar,
+  uploadCover,
 };

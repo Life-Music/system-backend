@@ -80,14 +80,7 @@ class MediaController extends BaseController {
     };
 
     let where: Prisma.MediaWhereInput = {
-      OR: [
-        {
-          userId: userId,
-        },
-        {
-          AND: MediaScoped.published,
-        },
-      ],
+      userId: userId,
     };
 
     if (fields.q) {

@@ -54,6 +54,7 @@ class AlbumRecController extends BaseController {
       skip: fields.take * fields.page - fields.take,
       select: {
         name: true,
+        id: true,
         mediaOnAlbum: {
           orderBy: {
             media: {

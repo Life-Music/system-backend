@@ -40,6 +40,30 @@ class ArtistController extends BaseController {
             },
           ],
         },
+        Album: {
+          orderBy: {
+            createdAt: 'desc',
+          },
+          include: {
+            mediaOnAlbum: {
+              select: {
+                media: {
+                  select: {
+                    thumbnails: {
+                      where: {
+                        isPrimary: true,
+                      },
+                    },
+                  },
+                },
+              },
+              take: 1,
+              orderBy: {
+                createdAt: 'desc',
+              },
+            },
+          },
+        },
       },
     });
 

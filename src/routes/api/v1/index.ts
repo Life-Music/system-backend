@@ -4,7 +4,7 @@ import { onlyAuth, onlyGuest, setUserInfo } from '@src/middleware/auth';
 import RegisterRequest from '@src/requests/RegisterRequest';
 import LoginRequest from '@src/requests/LoginRequest';
 import { loginController } from '@src/controllers/Guest/Auth/LoginController';
-import { saveWebPushSubscription, userInfoController } from '@src/controllers/BaseController';
+import { saveWebPushSubscription, updateUserInfo, userInfoController } from '@src/controllers/BaseController';
 import { createResumableUploadController } from '@src/controllers/User/Media/ResumableUploadController';
 import { CreateResumableUploadRequest } from '@src/requests/CreateResumableUploadRequest';
 import {
@@ -24,6 +24,11 @@ import {
   listAlbum,
   unAssignMediaOnAlbum,
 } from '@src/controllers/User/Album/AlbumController';
+
+import {
+  getAlbum as guestGetAlbum,
+  listAlbum as guestListAlbum,
+} from '@src/controllers/Guest/Album/GuestAlbumController';
 import CreateMediaRequest from '@src/requests/CreateMediaRequest';
 import BasePaginationRequest from '@src/requests/BasePaginationRequest';
 import UpdateMediaRequest from '@src/requests/UpdateMediaRequest';
@@ -32,7 +37,7 @@ import CreateAlbumRequest from '@src/requests/CreateAlbumRequest';
 import BaseSearchRequest from '@src/requests/BaseSearchRequest';
 import { getLinkStream } from '@src/controllers/Guest/Audio/AudioController';
 import { searchAlbum, searchCategory } from '@src/controllers/Guest/Search/SearchController';
-import { uploadThumbnail } from '@src/controllers/User/Upload/UploadController';
+import { uploadAvatar, uploadCover, uploadThumbnail } from '@src/controllers/User/Upload/UploadController';
 import { getCategoryRec, getMediaInCategoryRec } from '@src/controllers/Guest/Recommendation/CategoryRecController';
 import { mediaNewest, mediaRelated } from '@src/controllers/Guest/HomeController';
 import { getAlbumRec, getMediaInAlbumRec } from '@src/controllers/Guest/Recommendation/AlbumRecController';
@@ -58,10 +63,13 @@ import ListMediaRequest from '@src/requests/ListMediaRequest';
 import { getArtist, listArtist, subscribeArtist } from '@src/controllers/User/Artist/ArtistController';
 import ListArtistRequest from '@src/requests/ListArtistRequest';
 import CreateWebPushSubscriptionRequest from '@src/requests/CreateWebPushSubscriptionRequest';
+import UpdateProfileRequest from '@src/requests/UpdateProfileRequest';
 import GetInfoGoogleRequest from '@src/requests/GetInfoGoogleRequest';
 import { trending } from '@src/controllers/Trending/TrendingController';
 import { getGoogleInfo } from '@src/controllers/User/Google/GoogleController';
 import { disableSocialAccount } from '@src/controllers/User/SocialAccount/SocialAccountController';
+import { getMediaInCategory } from '@src/controllers/Guest/Category/GuestCategoryController';
+import { guestListMedia } from '@src/controllers/Guest/Media/GuestMediaController';
 
 const registerRequest = new RegisterRequest();
 const loginRequest = new LoginRequest();
@@ -81,6 +89,7 @@ const listArtistRequest = new ListArtistRequest();
 const createWebPushSubscriptionRequest = new CreateWebPushSubscriptionRequest();
 const getInfoGoogleRequest = new GetInfoGoogleRequest();
 const baseSearchRequest = new BaseSearchRequest();
+const updateProfileRequest = new UpdateProfileRequest();
 
 export const router: RouterOptions = {
   'path': '/api/v1',
@@ -118,12 +127,21 @@ export const router: RouterOptions = {
         },
         {
           path: '/album',
+          method: 'get',
+          request: baseSearchRequest.validation,
+          controller: guestListAlbum,
           children: [
             {
               path: '/search',
               method: 'get',
               controller: searchAlbum,
               request: baseSearchRequest.validation,
+            },
+            {
+              path: '/:albumId',
+              method: 'get',
+              controller: guestGetAlbum,
+              request: basePaginationRequest.validation,
             },
           ],
         },
@@ -212,7 +230,7 @@ export const router: RouterOptions = {
             {
               path: '',
               method: 'get',
-              controller: listMedia,
+              controller: guestListMedia,
               request: listMediaRequest.validation,
             },
             {
@@ -416,6 +434,27 @@ export const router: RouterOptions = {
             },
           ],
         },
+        {
+          path: '/me',
+          children: [
+            {
+              path: '',
+              method: 'patch',
+              request: updateProfileRequest.validation,
+              controller: updateUserInfo,
+            },
+            {
+              path: '/avatar/upload',
+              method: 'post',
+              controller: uploadAvatar,
+            },
+            {
+              path: '/cover/upload',
+              method: 'post',
+              controller: uploadCover,
+            },
+          ],
+        },
       ],
     },
     {
@@ -439,6 +478,12 @@ export const router: RouterOptions = {
               method: 'get',
               controller: searchCategory,
               request: baseSearchRequest.validation,
+            },
+            {
+              path: '/:categoryId',
+              method: 'get',
+              controller: getMediaInCategory,
+              request: basePaginationRequest.validation,
             },
           ],
         },

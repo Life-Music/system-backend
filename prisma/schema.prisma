@@ -47,6 +47,7 @@ model User {
   username  String    @unique
   password  String
   avatar    String?
+  cover     String?
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
   lockedAt  DateTime? @map("locked_at")
