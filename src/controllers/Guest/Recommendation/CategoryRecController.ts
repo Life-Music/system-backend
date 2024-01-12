@@ -44,6 +44,7 @@ class CategoryRecController extends BaseController {
           media: MediaScoped.published,
         },
       },
+      hot: true,
     };
 
     const categoryRec = await globalThis.prisma.category.findMany({

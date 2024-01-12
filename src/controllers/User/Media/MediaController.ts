@@ -217,8 +217,6 @@ class MediaController extends BaseController {
     const mediaId = req.params.mediaId;
 
     try {
-      console.log(mediaId);
-
       const media = await globalThis.prisma.$transaction(async (ctx) => {
         const media = await ctx.media.delete({
           where: {

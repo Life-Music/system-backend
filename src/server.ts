@@ -21,6 +21,7 @@ import { PrismaClient } from '../prisma/generated/mysql';
 import cors from 'cors';
 import { RedisClientType, createClient } from 'redis';
 import s3Client from '@src/services/S3Client';
+import bodyParser from 'body-parser';
 const redisClient: RedisClientType = createClient({
   url: EnvVars.Redis.Uri,
 });
@@ -40,7 +41,17 @@ globalThis.s3Client = s3Client;
 // **** Setup **** //
 
 // Basic middleware
-app.use(express.json());
+app.use(bodyParser.json({
+  // Because Stripe needs the raw body, we compute it but only when hitting the Stripe callback URL.
+  verify: function (req, res, buf) {
+    // @ts-ignore
+    var url = req.originalUrl;
+    if (url.startsWith('/api/v1/webhook')) {
+      // @ts-ignore
+      req.rawBody = buf.toString();
+    }
+  }
+}));
 app.use(cors());
 app.use(fileUpload());
 app.use((req, res, next) => {

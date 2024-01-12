@@ -46,4 +46,7 @@ export default {
     ClientSecret: (process.env.GOOGLE_CLIENT_SECRET ?? ''),
     RedirectUri: (process.env.GOOGLE_REDIRECT_URI ?? ''),
   },
+  Stripe: {
+    SK: (process.env.STRIPE_SK ?? ''),
+  },
 } as const;

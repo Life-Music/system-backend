@@ -70,6 +70,9 @@ import { getGoogleInfo } from '@src/controllers/User/Google/GoogleController';
 import { disableSocialAccount } from '@src/controllers/User/SocialAccount/SocialAccountController';
 import { getMediaInCategory } from '@src/controllers/Guest/Category/GuestCategoryController';
 import { guestListMedia } from '@src/controllers/Guest/Media/GuestMediaController';
+import { adminRoute } from './admin';
+import { paymentRoute } from './payment';
+import { webhookRoute } from './webhook';
 
 const registerRequest = new RegisterRequest();
 const loginRequest = new LoginRequest();
@@ -537,5 +540,8 @@ export const router: RouterOptions = {
         },
       ],
     },
+    paymentRoute,
+    adminRoute,
+    webhookRoute,
   ],
 };

@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { RequestHandler } from 'express';
 import BaseRequest from './requests/BaseRequest';
-import type { PrismaClient, User } from '../prisma/generated/mysql';
+import type { Admin, PrismaClient, User } from '../prisma/generated/mysql';
 import type { RedisClientType } from 'redis';
 import type { S3Client } from '@aws-sdk/client-s3';
 
@@ -28,7 +28,8 @@ declare module 'express' {
   export interface Request {
     fields?: Record<string, any>;
     query: Record<string, any>;
-    userInfo?: User
+    userInfo?: User,
+    adminInfo?: Admin,
   }
 
 }
